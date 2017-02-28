@@ -1,0 +1,37 @@
+{
+  "name": "simple-socket",
+  "version": "0.0.1",
+  "description": "Wrapper for sockets that makes it easy to send data compressed and crypted (RSA / AES).",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkloubert/node-simple-socket.git"
+  },
+  "keywords": [
+    "socket",
+    "wrapper",
+    "rsa",
+    "aes",
+    "encrypted",
+    "gzip",
+    "compressed"
+  ],
+  "author": "mkloubert",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mkloubert/node-simple-socket/issues"
+  },
+  "homepage": "https://github.com/mkloubert/node-simple-socket#readme",
+  "devDependencies": {
+    "@types/node": "^6.0.40",
+    "@types/node-uuid": "^0.0.28"
+  },
+  "dependencies": {
+    "node-rsa": "^0.4.2",
+    "node-uuid": "^1.4.7",
+    "randomstring": "^1.1.5"
+  }
+}
