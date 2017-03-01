@@ -1,5 +1,3 @@
-/// <reference types="node" />
-
 // The MIT License (MIT)
 // 
 // node-simple-socket (https://github.com/mkloubert/node-simple-socket)
