@@ -38,7 +38,7 @@ import * as simpleSocket from 'simple-socket';
 ```javascript
 // listening for new connections
 // on port 5979
-var server = simpleSocket.listen(5979, function(err, newConnectionWithAClient) {
+simpleSocket.listen(5979, function(err, newConnectionWithAClient) {
     // callback for new connections
 
     if (err) {
