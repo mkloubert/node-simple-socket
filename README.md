@@ -260,3 +260,25 @@ recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numbe
 });
 ```
 
+### Settings
+
+#### RSA
+
+The default key size for a handshake is `512`.
+
+You can change this by setting the `rsaKeySize` property:
+
+```javascript
+socket.rsaKeySize = 2048;
+```
+
+#### Maximum data (package) size
+
+By default, you cannot send and receive data with more than `16777211` bytes.
+
+You can change this by setting the `maxPackageSize` property:
+
+```javascript
+socket.maxPackageSize = 597923979;
+```
+
