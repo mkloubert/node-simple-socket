@@ -337,6 +337,14 @@ socket.maxPackageSize = 597923979;
 The module provides the following (public) variables that store default settings for properties of [SimpleSocket](https://mkloubert.github.io/node-simple-socket/classes/_index_.simplesocket.html) class.
 
 ```javascript
+// initial value for 'compress' property
+// Default: (undefined)
+simpleSocket.Compress = true;
+
+// initial value for 'cwd' property
+// Default: process.cwd()
+simpleSocket.DefaultCWD = 'E:/test';
+
 // initial value for 'maxPackageSize' property
 // Default: 16777211
 simpleSocket.DefaultMaxPackageSize = 239795979;
