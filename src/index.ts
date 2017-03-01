@@ -44,6 +44,14 @@ const DEFAULT_RSA_KEY_SIZE = 512;
  */
 export const DEFAULT_ENCODING = 'utf8';
 /**
+ * Default value that indicates if compression should be used or not.
+ */
+export let Compress: boolean;
+/**
+ * Default working directory.
+ */
+export let DefaultCWD = process.cwd();
+/**
  * The default size for a maximum data package.
  */
 export let DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
@@ -191,12 +199,12 @@ export class SimpleSocket extends Events.EventEmitter {
     /**
      * Try compress data or not.
      */
-    public compress: boolean;
+    public compress = Compress;
 
     /**
      * Gets the path of the working directory.
      */
-    public cwd: string;
+    public cwd = DefaultCWD;
 
     /**
      * A custom function that transformes data
