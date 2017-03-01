@@ -188,7 +188,7 @@ export class SimpleSocket extends Events.EventEmitter {
     /**
      * Try compress data or not.
      */
-    public compress = true;
+    public compress: boolean;
 
     /**
      * Gets the path of the working directory.
@@ -1038,7 +1038,11 @@ export class SimpleSocket extends Events.EventEmitter {
                     else {
                         result.compressed = compressedData;
 
-                        if (compressedData.length < uncompressedData.length) {
+                        if (compressedData.length < uncompressedData.length ||
+                            ssocket_helpers.toBooleanSafe(me.compress)) {
+                            // compressed data is smaller or
+                            // compression is forced
+
                             result.data = result.compressed;
                             result.isCompressed = true;
                         }
