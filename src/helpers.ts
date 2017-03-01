@@ -147,6 +147,22 @@ export function readSocket(socket: Net.Socket, numberOfBytes?: number): PromiseL
 }
 
 /**
+ * Converts a value to a boolean.
+ * 
+ * @param {any} val The value to convert.
+ * @param {any} defaultValue The value to return if 'val' is (null) or (undefined).
+ * 
+ * @return {boolean} The converted value.
+ */
+export function toBooleanSafe(val: any, defaultValue: any = false): boolean {
+    if (isNullOrUndefined(val)) {
+        return defaultValue;
+    }
+
+    return !!val;
+}
+
+/**
  * Converts a value to a string that is NOT (null) or (undefined).
  * 
  * @param {any} str The input value.

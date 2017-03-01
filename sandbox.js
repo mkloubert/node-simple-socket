@@ -13,7 +13,7 @@ server = simpleSocket.listen(port, (err, serverToClient) => {
     console.log('Listening on port ' + port);
 
     var client = simpleSocket.connect(port).then((clientToServer) => {
-        clientToServer.writeJSON([ 'Coolio!' ]).then((result) => {
+        clientToServer.writeJSON([ 'Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K! Marcel K!' ]).then((result) => {
             console.log('clientToServer.writeJSON(): ' + result);
         }, (err) => {
             console.log('[ERROR] clientToServer.writeJSON(): ' + err);

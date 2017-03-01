@@ -29,6 +29,7 @@ import * as Net from 'net';
 const RandomString = require("randomstring");
 const RSA = require('node-rsa');
 import * as ssocket_helpers from './helpers';
+import * as ZLib from 'zlib';
 
 
 const DEFAULT_MAX_PACKAGE_SIZE = 16777211;
@@ -46,6 +47,44 @@ export const DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
  * The default RSA key size.
  */
 export const DefaultRSAKeySize = DEFAULT_RSA_KEY_SIZE;
+
+/**
+ * A compression result.
+ */
+export interface CompressionResult {
+    /**
+     * The compressed data (if available).
+     */
+    compressed?: Buffer;
+    /**
+     * The suggested data to use.
+     */
+    data: Buffer;
+    /**
+     * The error (if occurred).
+     */
+    error?: any;
+    /**
+     * Data is compressed or not.
+     */
+    isCompressed: boolean;
+    /**
+     * The original (uncompressed) data.
+     */
+    uncompressed: Buffer;
+}
+
+export type DataTransformer = (ctx: DataTransformerContext) => Buffer | PromiseLike<Buffer>
+
+export interface DataTransformerContext {
+    readonly data: Buffer;
+    readonly direction: DataTransformerDirection;
+}
+
+export enum DataTransformerDirection {
+    Transform = 1,
+    Restore = 2,
+}
 
 /**
  * A listener callback.
@@ -110,6 +149,17 @@ export class SimpleSocket extends Events.EventEmitter {
     public get algorithm(): string {
         return 'aes-256-ctr';
     }
+
+    /**
+     * Try compress data or not.
+     */
+    public compress = true;
+
+    /**
+     * A custom function that transformes data
+     * before it is send or after it has been received.
+     */
+    public dataTransformer: DataTransformer;
 
     /**
      * Disposes the socket.
@@ -275,6 +325,12 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * A custom function that transforms the handshake
+     * public key before it is send or after it has been received.
+     */
+    public handshakeTransformer: DataTransformer;
+
+    /**
      * Makes a CLIENT handshake.
      * 
      * @param {PromiseLike<Buffer>} The promise.
@@ -291,50 +347,62 @@ export class SimpleSocket extends Events.EventEmitter {
                     keySize = me.getRSAKeySize();
                 }
 
+                me.emit('rsakey.generating', keySize);
+
                 let keys = RSA({
                     b: keySize,
                 });
 
-                let publicKey = new Buffer(ssocket_helpers.toStringSafe(keys.exportKey('public')),
-                                           me.getEncoding());
+                me.emit('rsakey.generated', keys);
 
-                let publicKeyLength = Buffer.alloc(4);
-                publicKeyLength.writeUInt32LE(publicKey.length, 0);
+                let untransformerPublicKey = new Buffer(ssocket_helpers.toStringSafe(keys.exportKey('public')),
+                                                        me.getEncoding());
 
-                // first send length of public key data
-                me.socket.write(publicKeyLength, (err) => {
-                    if (err) {
-                        completed(err);
-                        return;
-                    }
+                let transformerPromise = asDataTransformerPromise(me.handshakeTransformer,
+                                                                  DataTransformerDirection.Transform,
+                                                                  untransformerPublicKey);
 
-                    // now send key
-                    me.socket.write(publicKey, (err) => {
+                transformerPromise.then((publicKey) => {
+                    let publicKeyLength = Buffer.alloc(4);
+                    publicKeyLength.writeUInt32LE(publicKey.length, 0);
+
+                    // first send length of public key data
+                    me.socket.write(publicKeyLength, (err) => {
                         if (err) {
                             completed(err);
                             return;
                         }
 
-                        // now lets wait for the password
-                        // first the length
-                        ssocket_helpers.readSocket(me.socket, 2).then((buff) => {
-                            try {
-                                let pwdLength = buff.readUInt16LE(0);
-                                
-                                // and now the password itself
-                                ssocket_helpers.readSocket(me.socket, pwdLength).then((pwd) => {
-                                    completed(null, pwd);
-                                }, (err) => {
-                                    completed(err);
-                                });
+                        // now send key
+                        me.socket.write(publicKey, (err) => {
+                            if (err) {
+                                completed(err);
+                                return;
                             }
-                            catch (e) {
-                                completed(e);
-                            }
-                        }, (err) => {
-                            completed(err);
+
+                            // now lets wait for the password
+                            // first the length
+                            ssocket_helpers.readSocket(me.socket, 2).then((buff) => {
+                                try {
+                                    let pwdLength = buff.readUInt16LE(0);
+                                    
+                                    // and now the password itself
+                                    ssocket_helpers.readSocket(me.socket, pwdLength).then((pwd) => {
+                                        completed(null, pwd);
+                                    }, (err) => {
+                                        completed(err);
+                                    });
+                                }
+                                catch (e) {
+                                    completed(e);
+                                }
+                            }, (err) => {
+                                completed(err);
+                            });
                         });
                     });
+                }, (err) => {
+                    completed(err);
                 });
             }
             catch (e) {
@@ -411,31 +479,44 @@ export class SimpleSocket extends Events.EventEmitter {
 
                         ssocket_helpers.readSocket(me.socket, publicKeyLength).then((buff) => {
                             try {
-                                let publicKey = buff.toString(me.getEncoding());
-                                let key = RSA(publicKey);
+                                let transformerPromise = asDataTransformerPromise(me.handshakeTransformer,
+                                                                                  DataTransformerDirection.Restore,
+                                                                                  buff);
 
-                                // generate and send password
-                                me.generatePassword().then((pwd) => {
+                                transformerPromise.then((untransformedBuffer) => {
                                     try {
-                                        let pwdLength = Buffer.alloc(2);
-                                        pwdLength.writeUInt16LE(pwd.length, 0);
+                                        let publicKey = untransformedBuffer.toString(me.getEncoding());
+                                        let key = RSA(publicKey);
 
-                                        // first send size of password
-                                        me.socket.write(pwdLength, (err) => {
-                                            if (err) {
-                                                completed(err);
-                                                return;
+                                        // generate and send password
+                                        me.generatePassword().then((pwd) => {
+                                            try {
+                                                let pwdLength = Buffer.alloc(2);
+                                                pwdLength.writeUInt16LE(pwd.length, 0);
+
+                                                // first send size of password
+                                                me.socket.write(pwdLength, (err) => {
+                                                    if (err) {
+                                                        completed(err);
+                                                        return;
+                                                    }
+
+                                                    // and now the password itself
+                                                    me.socket.write(pwd, (err) => {
+                                                        if (err) {
+                                                            completed(err);
+                                                        }
+                                                        else {
+                                                            completed(null, pwd);
+                                                        }
+                                                    });
+                                                });
                                             }
-
-                                            // and now the password itself
-                                            me.socket.write(pwd, (err) => {
-                                                if (err) {
-                                                    completed(err);
-                                                }
-                                                else {
-                                                    completed(null, pwd);
-                                                }
-                                            });
+                                            catch (e) {
+                                                completed(e);
+                                            }
+                                        }, (err) => {
+                                            completed(err);
                                         });
                                     }
                                     catch (e) {
@@ -509,7 +590,39 @@ export class SimpleSocket extends Events.EventEmitter {
                                                 let a = decipher.update(cryptedData);
                                                 let b = decipher.final();
 
-                                                completed(null, Buffer.concat([a, b]));
+                                                let uncryptedData = Buffer.concat([a, b]);
+
+                                                let isCompressed = 1 === uncryptedData.readUInt8(0);
+
+                                                let compressedData = Buffer.alloc(uncryptedData.length - 1);
+                                                uncryptedData.copy(compressedData, 0, 1);
+
+                                                let untransformData = (transformedData: Buffer) => {
+                                                    let transformerPromise = asDataTransformerPromise(me.dataTransformer,
+                                                                                                      DataTransformerDirection.Restore,
+                                                                                                      transformedData);
+
+                                                    transformerPromise.then((untransformedData) => {
+                                                        completed(null, transformedData);
+                                                    }, (err) => {
+                                                        completed(err);
+                                                    });
+                                                };
+
+                                                if (isCompressed) {
+                                                    ZLib.gunzip(compressedData, (err, uncompressedData) => {
+                                                        if (err) {
+                                                            completed(err);
+                                                        }
+                                                        else {
+                                                            untransformData(uncompressedData);
+                                                        }
+                                                    });
+                                                }
+                                                else {
+                                                    // not compressed
+                                                    untransformData(compressedData);
+                                                }
                                             }
                                             catch (e) {
                                                 completed(e);
@@ -656,6 +769,64 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * Tries to compress data.
+     * 
+     * @param {any} data The data to compress.
+     * 
+     * @return {PromiseLike<CompressionResult>} The promise.
+     */
+    protected tryCompress(data: any): PromiseLike<CompressionResult> {
+        let me = this;
+        
+        return new Promise<CompressionResult>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                let uncompressedData = ssocket_helpers.asBuffer(data);
+
+                let result: CompressionResult = {
+                    data: uncompressedData,
+                    isCompressed: false,
+                    uncompressed: uncompressedData,
+                };
+
+                let returnResult = () => {
+                    completed(null, result);
+                };
+                
+                if (ssocket_helpers.isNullOrUndefined(uncompressedData)) {
+                    returnResult();
+                    return;
+                }
+
+                if (!ssocket_helpers.toBooleanSafe(me.compress, true)) {
+                    returnResult();  // do not compress
+                    return;
+                }
+
+                ZLib.gzip(uncompressedData, (err, compressedData) => {
+                    if (err) {
+                        result.error = err;
+                    }
+                    else {
+                        result.compressed = compressedData;
+
+                        if (compressedData.length < uncompressedData.length) {
+                            result.data = result.compressed;
+                            result.isCompressed = true;
+                        }
+                    }
+
+                    returnResult();
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
      * Reads data from the remote.
      * 
      * @param {PromiseLike<Buffer>} The promise.
@@ -671,55 +842,73 @@ export class SimpleSocket extends Events.EventEmitter {
             };
 
             try {
-                let uncryptedData = ssocket_helpers.asBuffer(data);
-                if (!uncryptedData || uncryptedData.length < 1) {
-                    noDataSend();
-                    return;
-                }
+                let sendData = (uncryptedData: Buffer) => {
+                    if (!uncryptedData || uncryptedData.length < 1) {
+                        noDataSend();
+                        return;
+                    }
 
-                me.makeHandshakeIfNeeded().then((pwd) => {
-                    try {
-                        let cipher = Crypto.createCipher(me.algorithm, pwd);
+                    me.tryCompress(uncryptedData).then((result) => {
+                        me.makeHandshakeIfNeeded().then((pwd) => {
+                            try {
+                                let cipher = Crypto.createCipher(me.algorithm, pwd);
 
-                        let a = cipher.update(uncryptedData);
-                        let b = cipher.final();
+                                let isCompressed = Buffer.alloc(1);
+                                isCompressed.writeUInt8(result.isCompressed ? 1 : 0, 0);
 
-                        let cryptedData = Buffer.concat([ a, b ]);
+                                let a = cipher.update(Buffer.concat([ isCompressed,
+                                                                    result.data ]));
+                                let b = cipher.final();
 
-                        if (!cryptedData || cryptedData.length < 1) {
-                            noDataSend();
-                            return;
-                        }
+                                let cryptedData = Buffer.concat([ a, b ]);
 
-                        if (cryptedData.length > me.getMaxPackageSize()) {
-                            completed(null, null);  // maximum package size reached
-                            return;
-                        }
+                                if (cryptedData.length < 1) {
+                                    noDataSend();
+                                    return;
+                                }
 
-                        let dataLength = Buffer.alloc(4);
-                        dataLength.writeUInt32LE(cryptedData.length, 0);
+                                if (cryptedData.length > me.getMaxPackageSize()) {
+                                    completed(null, null);  // maximum package size reached
+                                    return;
+                                }
 
-                        // first send data length
-                        me.socket.write(dataLength, (err) => {
-                            if (err) {
-                                completed(err);
-                                return;
+                                let dataLength = Buffer.alloc(4);
+                                dataLength.writeUInt32LE(cryptedData.length, 0);
+
+                                // first send data length
+                                me.socket.write(dataLength, (err) => {
+                                    if (err) {
+                                        completed(err);
+                                        return;
+                                    }
+
+                                    // now the crypted data
+                                    me.socket.write(cryptedData, (err) => {
+                                        if (err) {
+                                            completed(err);
+                                        }
+                                        else {
+                                            completed(null, uncryptedData);  // all send
+                                        }
+                                    });
+                                });
                             }
-
-                            // now the crypted data
-                            me.socket.write(cryptedData, (err) => {
-                                if (err) {
-                                    completed(err);
-                                }
-                                else {
-                                    completed(null, uncryptedData);  // all send
-                                }
-                            });
+                            catch (e) {
+                                completed(e);
+                            }
+                        }, (err) => {
+                            completed(err);
                         });
-                    }
-                    catch (e) {
-                        completed(e);
-                    }
+                    }, (err) => {
+                        completed(err);
+                    });
+                };
+
+                let transformerPromise = asDataTransformerPromise(me.dataTransformer,
+                                                                  DataTransformerDirection.Transform,
+                                                                  ssocket_helpers.asBuffer(data));
+                transformerPromise.then((transformedData) => {
+                    sendData(transformedData);
                 }, (err) => {
                     completed(err);
                 });
@@ -884,4 +1073,46 @@ export function listen(port: number,
             completed(e);
         }
     });
+}
+
+
+function asDataTransformerPromise(transformer: DataTransformer, direction: DataTransformerDirection, data: Buffer): PromiseLike<Buffer> {
+    return new Promise<Buffer>((resolve, reject) => {
+        let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+        try {
+            transformer = toDataTransformerSave(transformer);
+            let transformerCtx: DataTransformerContext = {
+                data: data,
+                direction: direction,
+            };
+
+            let transformerResult = transformer(transformerCtx);
+            if ('function' === typeof transformerResult['then']) {
+                let promise = <PromiseLike<Buffer>>transformerResult;
+
+                promise.then((transformedData) => {
+                    completed(null, transformedData);
+                }, (err) => {
+                    completed(err);
+                });
+            }
+            else {
+                completed(null, <Buffer>transformerResult);
+            }
+        }
+        catch (e) {
+            completed(e);
+        }
+    });
+}
+
+function toDataTransformerSave(transformer: DataTransformer): DataTransformer {
+    if (!transformer) {
+        transformer = (ctx) => {
+            return ctx.data;
+        };
+    }
+    
+    return transformer;
 }
