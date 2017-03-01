@@ -2,3 +2,5 @@ pushall.sh
 src/**/*
 sandbox.js
 testfile.txt
+testfile.out.txt
+typedoc.cmd

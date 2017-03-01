@@ -1,6 +1,6 @@
 {
   "name": "node-simple-socket",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Wrapper for sockets that makes it easy to send data compressed and crypted (RSA / AES).",
   "main": "lib/index.js",
   "scripts": {
