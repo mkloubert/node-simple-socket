@@ -304,7 +304,7 @@ clientSocket.rsaKeySize = 2048;  // better, but takes more time
 
 #### Custom password generator
 
-While the a handshake, (server) sockets generate a random password via [randomstring](https://www.npmjs.com/package/randomstring) module, that are exchanged with RSA encryption.
+While a handshake, (server) sockets generate a random password via [randomstring](https://www.npmjs.com/package/randomstring) module, that are exchanged with RSA encryption.
 
 Those passwords have a size of `48` bytes and contain alphanumeric characters by default.
 
