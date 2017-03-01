@@ -1,41 +1,28 @@
-var net = require('net');
 var simpleSocket = require('./lib');
 
-var server = net.createServer((socket) => {
-    var serverToClient = simpleSocket.createServer(socket);
+var port = 30904;
 
-    serverToClient.makeHandshakeIfNeeded().then((result) => {
-        console.log('serverToClient.makeHandshakeIfNeeded(): ' + result);
+var server;
+server = simpleSocket.listen(port, (err, serverToClient) => {
+    serverToClient.readJSON().then((str) => {
+        console.log('serverToClient.readJSON(): ' + JSON.stringify(str));
     }, (err) => {
-        console.log('[ERROR] serverToClient.makeHandshakeIfNeeded(): ' + err);
+        console.log('[ERROR] serverToClient.readJSON(): ' + err);
     });
+}).then((srv) => {
+    console.log('Listening on port ' + port);
+
+    var client = simpleSocket.connect(port).then((clientToServer) => {
+        clientToServer.writeJSON([ 'Coolio!' ]).then((result) => {
+            console.log('clientToServer.writeJSON(): ' + result);
+        }, (err) => {
+            console.log('[ERROR] clientToServer.writeJSON(): ' + err);
+        });
+    }, (err) => {
+        console.log('[ERROR] Could not connect to port ' + port + ': ' + err);
+    });
+}, (err) => {
+    console.log('[ERROR] Could not listen on port ' + port + ': ' + err);
 });
-
-server.on('listening', () => {
-    console.log('Listening...');
-
-    var client = new net.Socket();
-
-    client.on('error', (err) => {
-        console.log('[ERROR] client.1: ' + err);
-    });
-
-    client.connect(30904, (err) => {
-        if (err) {
-            console.log('[ERROR] client.2: ' + err);
-        }
-        else {
-            var clientToServer = simpleSocket.createClient(client); 
-
-            clientToServer.makeHandshakeIfNeeded().then((result) => {
-                console.log('clientToServer.makeHandshakeIfNeeded(): ' + result);
-            }, (err) => {
-                console.log('[ERROR] clientToServer.makeHandshakeIfNeeded(): ' + err);
-            });
-        }
-    });
-});
-
-server.listen(30904);
 
 console.log('OK');

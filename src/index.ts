@@ -23,6 +23,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+import * as Crypto from 'crypto';
 import * as Events from 'events';
 import * as Net from 'net';
 const RandomString = require("randomstring");
@@ -30,14 +31,29 @@ const RSA = require('node-rsa');
 import * as ssocket_helpers from './helpers';
 
 
+const DEFAULT_MAX_PACKAGE_SIZE = 16777211;
+const DEFAULT_RSA_KEY_SIZE = 512;
+
 /**
  * The default (string) encoding.
  */
 export const DEFAULT_ENCODING = 'utf8';
 /**
+ * The default size for a maximum data package.
+ */
+export const DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+/**
  * The default RSA key size.
  */
-export const DefaultRSAKeySize = 512;
+export const DefaultRSAKeySize = DEFAULT_RSA_KEY_SIZE;
+
+/**
+ * A listener callback.
+ * 
+ * @param {any} err The error (if occurred).
+ * @param {SimpleSocket} [socket] The socket if no error ocurred.
+ */
+export type ListenCallback = (err: any, socket?: SimpleSocket) => void;
 
 /**
  * List of socket types.
@@ -84,6 +100,15 @@ export class SimpleSocket extends Events.EventEmitter {
         if (!this._socket) {
             this._socket = new Net.Socket();
         }
+
+        this.setupEvents();
+    }
+
+    /**
+     * Gets the symetric encryption algorithm.
+     */
+    public get algorithm(): string {
+        return 'aes-256-ctr';
     }
 
     /**
@@ -216,6 +241,40 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * Gets the maximum size for a package.
+     * 
+     * @return {number} The maximum package size.
+     */
+    public getMaxPackageSize(): number {
+        let result = parseInt(ssocket_helpers.toStringSafe(this.maxPackageSize).trim());
+        if (isNaN(result)) {
+            result = parseInt(ssocket_helpers.toStringSafe(DefaultMaxPackageSize).trim());
+        }
+        if (isNaN(result)) {
+            result = DEFAULT_MAX_PACKAGE_SIZE;
+        }
+
+        return result;
+    }
+
+    /**
+     * Gets the size for a RSA key.
+     * 
+     * @return {number} The RSA key size.
+     */
+    protected getRSAKeySize(): number {
+        let result = parseInt(ssocket_helpers.toStringSafe(this.rsaKeySize).trim());
+        if (isNaN(result)) {
+            result = parseInt(ssocket_helpers.toStringSafe(DefaultRSAKeySize).trim());
+        }
+        if (isNaN(result)) {
+            result = DEFAULT_RSA_KEY_SIZE;
+        }
+
+        return result;
+    }
+
+    /**
      * Makes a CLIENT handshake.
      * 
      * @param {PromiseLike<Buffer>} The promise.
@@ -229,7 +288,7 @@ export class SimpleSocket extends Events.EventEmitter {
             try {
                 let keySize = parseInt(ssocket_helpers.toStringSafe(me.rsaKeySize).trim());
                 if (isNaN(keySize)) {
-                    keySize = 512;
+                    keySize = me.getRSAKeySize();
                 }
 
                 let keys = RSA({
@@ -287,12 +346,12 @@ export class SimpleSocket extends Events.EventEmitter {
     /**
      * Makes a handshake if needed.
      * 
-     * @param {PromiseLike<boolean>} The promise.
+     * @param {PromiseLike<Buffer>} The promise.
      */
-    public makeHandshakeIfNeeded(): PromiseLike<boolean> {
+    public makeHandshakeIfNeeded(): PromiseLike<Buffer> {
         let me = this;
 
-        return new Promise<boolean>((resolve, reject) => {
+        return new Promise<Buffer>((resolve, reject) => {
             let type = me.type;
             
             if (ssocket_helpers.isNullOrUndefined(me.password)) {
@@ -302,7 +361,9 @@ export class SimpleSocket extends Events.EventEmitter {
                     me.makeServerHandshake().then((pwd) => {
                         me.password = pwd;
 
-                        resolve(true);
+                        me.emit('handshake', pwd);
+
+                        resolve(pwd);
                     }, (err) => {
                         reject(err);
                     });
@@ -312,8 +373,10 @@ export class SimpleSocket extends Events.EventEmitter {
                     
                     me.makeClientHandshake().then((pwd) => {
                         me.password = pwd;
+
+                        me.emit('handshake', pwd);
                         
-                        resolve(true);
+                        resolve(pwd);
                     }, (err) => {
                         reject(err);
                     });
@@ -324,7 +387,7 @@ export class SimpleSocket extends Events.EventEmitter {
             }
             else {
                 // no handshake required
-                resolve(false);
+                resolve(me.password);
             }
         });
     }
@@ -403,6 +466,11 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * Defines the maximum size of a package.
+     */
+    public maxPackageSize = DefaultMaxPackageSize;
+
+    /**
      * Stores the current password.
      */
     public password: Buffer;
@@ -413,9 +481,163 @@ export class SimpleSocket extends Events.EventEmitter {
     public passwordGenerator: () => Buffer | PromiseLike<Buffer> | string | PromiseLike<string>;
 
     /**
+     * Reads data from the remote.
+     * 
+     * @param {PromiseLike<Buffer>} The promise.
+     */
+    public read(): PromiseLike<Buffer> {
+        let me = this;
+
+        return new Promise<Buffer>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                me.makeHandshakeIfNeeded().then((pwd) => {
+                    try {
+                        ssocket_helpers.readSocket(me.socket, 4).then((buff) => {
+                            try {
+                                let dataLength = buff.readUInt32LE(0);
+                                if (dataLength <= me.getMaxPackageSize()) {
+                                    if (dataLength < 1) {
+                                        completed(null, Buffer.alloc(0));
+                                    }
+                                    else {
+                                        ssocket_helpers.readSocket(me.socket, dataLength).then((cryptedData) => {
+                                            try {
+                                                let decipher = Crypto.createDecipher(me.algorithm, pwd);
+
+                                                let a = decipher.update(cryptedData);
+                                                let b = decipher.final();
+
+                                                completed(null, Buffer.concat([a, b]));
+                                            }
+                                            catch (e) {
+                                                completed(e);
+                                            }
+                                        }, (err) => {
+                                            completed(err);
+                                        });
+                                    }
+                                }
+                                else {
+                                    completed(null, null);  // maximum reached
+                                }
+                            }
+                            catch (e) {
+                                completed(e);
+                            }
+                        }, (err) => {
+                            completed(err);
+                        });
+                    }
+                    catch (e) {
+                        completed(e);
+                    }
+                }, (err) => {
+                    completed(err);
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
+     * Reads data as JSON object.
+     * 
+     * @return {PromiseLike<T>} The promise.
+     */
+    public readJSON<T>(): PromiseLike<T> {
+        let me = this;
+        
+        return new Promise<T>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                me.readString().then((json) => {
+                    try {
+                        let obj: T;
+
+                        if (ssocket_helpers.isNullOrUndefined(json)) {
+                            obj = <any>json;
+                        }
+                        else {
+                            obj = JSON.parse(json);
+                        }
+
+                        completed(null, obj);
+                    }
+                    catch (e) {
+                        completed(e);
+                    }
+                }, (err) => {
+                    completed(err);
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
+     * Reads data as string.
+     * 
+     * @return {PromiseLike<string>} The promise.
+     */
+    public readString(): PromiseLike<string> {
+        let me = this;
+        
+        return new Promise<string>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                me.read().then((buff) => {
+                    try {
+                        if (buff) {
+                            completed(null, 
+                                      buff.toString(me.getEncoding()));
+                        }
+                        else {
+                            completed(null, null);
+                        }
+                    }
+                    catch (e) {
+                        completed(e);
+                    }
+                }, (err) => {
+                    completed(err);
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
      * The RSA key size.
      */
     public rsaKeySize = DefaultRSAKeySize;
+
+    /**
+     * Sets up the events.
+     */
+    protected setupEvents() {
+        let me = this;
+        
+        me.socket.on('error', (err) => {
+            if (err) {
+                me.emit('error',
+                        err);
+            }
+        });
+
+        me.socket.on('close', () => {
+            me.emit('close');
+        });
+    }
 
     /**
      * Gets the wrapped socket.
@@ -432,8 +654,151 @@ export class SimpleSocket extends Events.EventEmitter {
     public get type(): SocketType {
         return this._type;
     }
+
+    /**
+     * Reads data from the remote.
+     * 
+     * @param {PromiseLike<Buffer>} The promise.
+     */
+    public write(data: any): PromiseLike<Buffer> {
+        let me = this;
+
+        return new Promise<Buffer>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            let noDataSend = () => {
+                completed(null, null);
+            };
+
+            try {
+                let uncryptedData = ssocket_helpers.asBuffer(data);
+                if (!uncryptedData || uncryptedData.length < 1) {
+                    noDataSend();
+                    return;
+                }
+
+                me.makeHandshakeIfNeeded().then((pwd) => {
+                    try {
+                        let cipher = Crypto.createCipher(me.algorithm, pwd);
+
+                        let a = cipher.update(uncryptedData);
+                        let b = cipher.final();
+
+                        let cryptedData = Buffer.concat([ a, b ]);
+
+                        if (!cryptedData || cryptedData.length < 1) {
+                            noDataSend();
+                            return;
+                        }
+
+                        if (cryptedData.length > me.getMaxPackageSize()) {
+                            completed(null, null);  // maximum package size reached
+                            return;
+                        }
+
+                        let dataLength = Buffer.alloc(4);
+                        dataLength.writeUInt32LE(cryptedData.length, 0);
+
+                        // first send data length
+                        me.socket.write(dataLength, (err) => {
+                            if (err) {
+                                completed(err);
+                                return;
+                            }
+
+                            // now the crypted data
+                            me.socket.write(cryptedData, (err) => {
+                                if (err) {
+                                    completed(err);
+                                }
+                                else {
+                                    completed(null, uncryptedData);  // all send
+                                }
+                            });
+                        });
+                    }
+                    catch (e) {
+                        completed(e);
+                    }
+                }, (err) => {
+                    completed(err);
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
+     * Sends an object / value as JSON string.
+     * 
+     * @param {T} obj The object to send.
+     * 
+     * @returns {PromiseLike<Buffer>} The promise.
+     */
+    public writeJSON<T>(obj: T): PromiseLike<Buffer> {
+        let me = this;
+        
+        return new Promise<Buffer>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                let json: string;
+                if (ssocket_helpers.isNullOrUndefined(obj)) {
+                    json = <any>obj;
+                }
+                else {
+                    json = JSON.stringify(obj);
+                }
+
+                me.write(json).then((buff) => {
+                    completed(null, buff);
+                }, (err) => {
+                    completed(err);
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
 }
 
+/**
+ * Connects to a remote (server).
+ * 
+ * @param {number} port The TCP port of the remote machine.
+ * @param {string} host The host (address).
+ * 
+ * @return {PromiseLike<SimpleSocket>} The promise.
+ */
+export function connect(port: number, host?: string): PromiseLike<SimpleSocket> {
+    return new Promise<SimpleSocket>((resolve, reject) => {
+        let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+        try {
+            let client = new Net.Socket();
+
+            client.connect(port, host, (err) => {
+                try {
+                    if (err) {
+                        completed(err);
+                    }
+                    else {
+                        completed(null, createClient(client));    
+                    }
+                }
+                catch (e) {
+                    completed(e);
+                }
+            });
+        }
+        catch (e) {
+            completed(e);
+        }
+    });
+}
 
 /**
  * Creates a new instance.
@@ -467,4 +832,56 @@ export function createClient(socket?: Net.Socket): SimpleSocket {
  */
 export function createServer(socket?: Net.Socket): SimpleSocket {
     return new SimpleSocket(SocketType.Server, socket);
+}
+
+/**
+ * Starts listening on a port.
+ * 
+ * @param {number} port The TCP port to listen on.
+ * @param {ListenCallback} cb The listener callback.
+ * 
+ * @return {PromiseLike<Net.Server>} The promise.
+ */
+export function listen(port: number,
+                       cb: ListenCallback): PromiseLike<Net.Server> {
+    return new Promise<Net.Server>((resolve, reject) => {
+        let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+        try {
+            let serverToClient: SimpleSocket;
+
+            let server = Net.createServer((connectionWithClient) => {
+                try {
+                    if (cb) {
+                        cb(null,
+                           createServer(connectionWithClient));
+                    }
+                }
+                catch (e) {
+                    if (cb) {
+                        cb(e);
+                    }    
+                }
+            });
+
+            let isListening = false;
+
+            server.once('error', (err) => {
+                if (!isListening && err) {
+                    completed(err);
+                }
+            });
+
+            server.on('listening', () => {
+                isListening = true;
+
+                completed(null, server);
+            });
+
+            server.listen(port);
+        }
+        catch (e) {
+            completed(e);
+        }
+    });
 }
