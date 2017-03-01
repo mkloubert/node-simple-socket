@@ -43,6 +43,10 @@ exports.DEFAULT_ENCODING = 'utf8';
  */
 exports.DefaultCWD = process.cwd();
 /**
+ * The default text encoding.
+ */
+exports.DefaultEncoding = exports.DEFAULT_ENCODING;
+/**
  * The default size for a maximum data package.
  */
 exports.DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
@@ -103,9 +107,19 @@ class SimpleSocket extends Events.EventEmitter {
          */
         this.cwd = exports.DefaultCWD;
         /**
+         * A custom function that transformes data
+         * before it is send or after it has been received.
+         */
+        this.dataTransformer = exports.DefaultDataTransformer;
+        /**
          * Gets or sets the (string) encoding to use.
          */
-        this.encoding = exports.DEFAULT_ENCODING;
+        this.encoding = exports.DefaultEncoding;
+        /**
+         * A custom function that transforms the handshake
+         * public key before it is send or after it has been received.
+         */
+        this.handshakeTransformer = exports.DefaultHandshakeTransformer;
         /**
          * Defines the maximum size of a package.
          */

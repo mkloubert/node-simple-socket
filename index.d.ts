@@ -14,6 +14,18 @@ export declare let Compress: boolean;
  */
 export declare let DefaultCWD: string;
 /**
+ * The default text encoding.
+ */
+export declare let DefaultEncoding: string;
+/**
+ * Default data transformer.
+ */
+export declare let DefaultDataTransformer: DataTransformer;
+/**
+ * Default handshake transformer.
+ */
+export declare let DefaultHandshakeTransformer: DataTransformer;
+/**
  * The default size for a maximum data package.
  */
 export declare let DefaultMaxPackageSize: number;
