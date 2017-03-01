@@ -27,7 +27,7 @@ import * as simpleSocket from 'simple-socket';
 ### Create a server
 
 ```javascript
-// listening for new connection
+// listening for new connections
 // on port 5979
 var server = simpleSocket.listen(5979, function(err, newConnection) {
     // callback for new connections
@@ -304,7 +304,7 @@ clientSocket.rsaKeySize = 2048;  // better, but takes more time
 
 #### Custom password generator
 
-While the a handshake, (server) sockets generate a random password via [randomstring](https://www.npmjs.com/package/randomstring) module, that are exchanged with RSA encryption.
+While a handshake, (server) sockets generate a random password via [randomstring](https://www.npmjs.com/package/randomstring) module, that is exchanged with RSA encryption.
 
 Those passwords have a size of `48` bytes and contain alphanumeric characters by default.
 
@@ -332,3 +332,6 @@ You can change this, by setting the `maxPackageSize` property:
 socket.maxPackageSize = 597923979;
 ```
 
+## Documentation
+
+The full API documentation can be found [here](https://mkloubert.github.io/node-simple-socket/).
