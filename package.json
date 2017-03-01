@@ -27,12 +27,10 @@
   },
   "homepage": "https://github.com/mkloubert/node-simple-socket#readme",
   "devDependencies": {
-    "@types/node": "^6.0.40",
-    "@types/node-uuid": "^0.0.28"
+    "@types/node": "^6.0.40"
   },
   "dependencies": {
     "node-rsa": "^0.4.2",
-    "node-uuid": "^1.4.7",
     "randomstring": "^1.1.5"
   }
 }
