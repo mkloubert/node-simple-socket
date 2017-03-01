@@ -6,9 +6,20 @@ import * as Net from 'net';
  */
 export declare const DEFAULT_ENCODING: string;
 /**
+ * Default value that indicates if compression should be used or not.
+ */
+export declare let Compress: boolean;
+/**
+ * Default working directory.
+ */
+export declare let DefaultCWD: string;
+/**
  * The default size for a maximum data package.
  */
 export declare let DefaultMaxPackageSize: number;
+/**
+ * Default buffer size for reading streams.
+ */
 export declare let DefaultReadBufferSize: number;
 /**
  * The default RSA key size.
