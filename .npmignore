@@ -1,6 +1,7 @@
 pushall.sh
 **/*.map
-**/*.ts
+index.ts
+helpers.ts
 sandbox.js
 testfile.txt
 testfile.out.txt
