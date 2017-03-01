@@ -260,6 +260,34 @@ recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numbe
 });
 ```
 
+### Events
+
+```javascript
+socket.on('close', function() {
+    // socket closed
+});
+
+socket.on('disposed', function() {
+    // socket has been disposed
+});
+
+socket.on('error', function(err) {
+    // an error occurred
+});
+
+socket.on('handshake', function(pwd) {
+    // socket has made a handshake
+});
+
+socket.on('rsakey.generating', function(keySize) {
+    // socket is generting a RSA key pair
+});
+
+socket.on('rsakey.generated', function(keyPair) {
+    // socket has been generted a RSA key pair
+});
+```
+
 ### Settings
 
 #### RSA
