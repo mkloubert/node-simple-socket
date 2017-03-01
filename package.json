@@ -30,6 +30,7 @@
     "url": "https://github.com/mkloubert/node-simple-socket/issues"
   },
   "homepage": "https://github.com/mkloubert/node-simple-socket#readme",
+  "readmeFilename": "README.md",
   "devDependencies": {
     "@types/node": "^6.0.40"
   },
