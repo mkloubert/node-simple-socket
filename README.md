@@ -167,13 +167,13 @@ var fs = require('fs');
 
 fs.open('./fileToSend.txt', 'r', function(err, fd) {
     if (err) 
-        // could not open file
+        // could not open stream
     }
     else {
         senderSocket.writeStream(fd).then(function(numberOfBytesSend) {
-            // file has been send
+            // stream has been send
         }, function (err) {
-            // could not send file
+            // could not send stream
         });
     }
 });
