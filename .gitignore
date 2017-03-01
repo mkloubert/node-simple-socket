@@ -1,4 +1,4 @@
 pushall.sh
-lib/**/*
+lib/**/*.map
 node_modules
 /testfile.out.txt
