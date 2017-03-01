@@ -41,7 +41,7 @@ import * as simpleSocket from 'simple-socket';
 ```javascript
 // listening for new connections
 // on port 5979
-simpleSocket.listen(5979, function(err, newConnectionWithAClient) {
+simpleSocket.listen(5979, function(err, serverToClientSocket) {
     // callback for new connections
 
     if (err) {
@@ -63,7 +63,7 @@ simpleSocket.listen(5979, function(err, newConnectionWithAClient) {
 ```javascript
 // listening for new connection
 // on port 5979
-simpleSocket.connect(5979, 'server.example.com').then(function(socket) {
+simpleSocket.connect(5979, 'server.example.com').then(function(clientToServerSocket) {
     // connection established
 }, function(err) {
     // could not connect
