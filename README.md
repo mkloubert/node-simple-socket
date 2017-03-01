@@ -27,7 +27,7 @@ import * as simpleSocket from 'simple-socket';
 ### Create a server
 
 ```javascript
-// listening for new connection
+// listening for new connections
 // on port 5979
 var server = simpleSocket.listen(5979, function(err, newConnection) {
     // callback for new connections
