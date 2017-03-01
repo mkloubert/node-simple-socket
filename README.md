@@ -198,8 +198,65 @@ fs.open('./whereToWriteReceivedFileTo.txt', 'w', function(err, fd) {
 });
 ```
 
-#### Mixed (files and stream)
+#### Mixed (files <=> stream)
 
 ##### File => Stream
 
+Send:
+
+```javascript
+senderSocket.writeFile('./fileToSend.txt').then(function(numberOfBytesSend) {
+    // file has been send
+}, function (err) {
+    // could not send file
+});
+```
+
+Receive:
+
+```javascript
+var fs = require('fs');
+
+fs.open('./whereToWriteReceivedFileTo.txt', 'w', function(err, fd) {
+    if (err) {
+        // could not open stream
+    }
+    else {
+        recipientSocket.readStream(fd).then(function(numberOfBytesLoaded) {
+            // stream has been received
+        }, function (e) {
+            // could not receive stream
+        });
+    }
+});
+```
+
 ##### Stream => File
+
+Send:
+
+```javascript
+var fs = require('fs');
+
+fs.open('./fileToSend.txt', 'r', function(err, fd) {
+    if (err) 
+        // could not open stream
+    }
+    else {
+        senderSocket.writeStream(fd).then(function(numberOfBytesSend) {
+            // stream has been send
+        }, function (err) {
+            // could not send stream
+        });
+    }
+});
+```
+
+```javascript
+recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numberOfBytesLoaded) {
+    // file has been received
+}, function (err) {
+    // could not receive file
+});
+```
+
