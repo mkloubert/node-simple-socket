@@ -61,8 +61,8 @@ simpleSocket.listen(5979, function(err, serverToClientSocket) {
 ### Connect to a server
 
 ```javascript
-// listening for new connection
-// on port 5979
+// connect to a server (socket)
+// that listens on port 5979
 simpleSocket.connect(5979, 'server.example.com').then(function(clientToServerSocket) {
     // connection established
 }, function(err) {
