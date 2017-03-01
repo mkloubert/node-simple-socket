@@ -332,6 +332,24 @@ You can change this, by setting the `maxPackageSize` property:
 socket.maxPackageSize = 597923979;
 ```
 
+#### Default values
+
+The module provides the following (public) variables that store default settings for properties of [SimpleSocket](https://mkloubert.github.io/node-simple-socket/classes/_index_.simplesocket.html) class.
+
+```javascript
+// initial value for 'maxPackageSize' property
+// Default: 16777211
+simpleSocket.DefaultMaxPackageSize = 239795979;
+
+// initial value for 'readBufferSize' property
+// Default: 8192
+simpleSocket.DefaultReadBufferSize = 10240;
+
+// initial value for 'rsaKeySize' property
+// Default: 512
+simpleSocket.DefaultRSAKeySize = 4096;
+```
+
 ## Documentation
 
 The full API documentation can be found [here](https://mkloubert.github.io/node-simple-socket/).
