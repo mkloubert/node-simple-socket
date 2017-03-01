@@ -52,6 +52,18 @@ export let Compress: boolean;
  */
 export let DefaultCWD = process.cwd();
 /**
+ * The default text encoding.
+ */
+export let DefaultEncoding = DEFAULT_ENCODING;
+/**
+ * Default data transformer.
+ */
+export let DefaultDataTransformer: DataTransformer;
+/**
+ * Default handshake transformer.
+ */
+export let DefaultHandshakeTransformer: DataTransformer;
+/**
  * The default size for a maximum data package.
  */
 export let DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
@@ -210,7 +222,7 @@ export class SimpleSocket extends Events.EventEmitter {
      * A custom function that transformes data
      * before it is send or after it has been received.
      */
-    public dataTransformer: DataTransformer;
+    public dataTransformer = DefaultDataTransformer;
 
     /**
      * Disposes the socket.
@@ -230,7 +242,7 @@ export class SimpleSocket extends Events.EventEmitter {
     /**
      * Gets or sets the (string) encoding to use.
      */
-    public encoding = DEFAULT_ENCODING;
+    public encoding = DefaultEncoding;
 
     /**
      * Sends the connection.
@@ -415,7 +427,7 @@ export class SimpleSocket extends Events.EventEmitter {
      * A custom function that transforms the handshake
      * public key before it is send or after it has been received.
      */
-    public handshakeTransformer: DataTransformer;
+    public handshakeTransformer = DefaultHandshakeTransformer;
 
     /**
      * Makes a CLIENT handshake.

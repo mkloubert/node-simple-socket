@@ -27,13 +27,13 @@ npm install node-simple-socket --save
 ### Import
 
 ```javascript
-var simpleSocket = require('node-simple-socket');
+var simpleSocketModule = require('node-simple-socket');
 ```
 
 The [TypeScript](https://www.typescriptlang.org/) way:
 
 ```typescript
-import * as simpleSocket from 'node-simple-socket';
+import * as simpleSocketModule from 'node-simple-socket';
 ```
 
 ### Create a server
@@ -41,7 +41,7 @@ import * as simpleSocket from 'node-simple-socket';
 ```javascript
 // listening for new connections
 // on port 5979
-simpleSocket.listen(5979, function(err, serverToClientSocket) {
+simpleSocketModule.listen(5979, function(err, serverToClientSocket) {
     // callback for new connections
 
     if (err) {
@@ -50,6 +50,7 @@ simpleSocket.listen(5979, function(err, serverToClientSocket) {
     }
     else {
         // work with new connection
+        // in wrapped 'serverToClientSocket'
     }
 }).then(function(server) {
     // the server is now listening
@@ -63,8 +64,11 @@ simpleSocket.listen(5979, function(err, serverToClientSocket) {
 ```javascript
 // connect to a server (socket)
 // that listens on port 5979
-simpleSocket.connect(5979, 'server.example.com').then(function(clientToServerSocket) {
+simpleSocketModule.connect(5979, 'server.example.com').then(function(clientToServerSocket) {
     // connection established
+
+    // work with wrapped socket
+    // in 'clientToServerSocket'
 }, function(err) {
     // could not connect
 });
@@ -351,23 +355,39 @@ The module provides the following (public) variables that store default settings
 ```javascript
 // initial value for 'compress' property
 // Default: (undefined)
-simpleSocket.Compress = true;
+simpleSocketModule.Compress = true;
 
 // initial value for 'cwd' property
 // Default: process.cwd()
-simpleSocket.DefaultCWD = 'E:/test';
+simpleSocketModule.DefaultCWD = 'E:/test';
+
+// initial value for 'dataTransformer' property
+// Default: (undefined)
+simpleSocketModule.DefaultDataTransformer = function(untransformedData){
+    // return transformed data
+};
+
+// initial value for 'encoding' property
+// Default: utf8
+simpleSocketModule.DefaultEncoding = 'ascii';
+
+// initial value for 'handshakeTransformer' property
+// Default: (undefined)
+simpleSocketModule.DefaultHandshakeTransformer = function(untransformedData){
+    // return transformed data
+};
 
 // initial value for 'maxPackageSize' property
 // Default: 16777211
-simpleSocket.DefaultMaxPackageSize = 239795979;
+simpleSocketModule.DefaultMaxPackageSize = 239795979;
 
 // initial value for 'readBufferSize' property
 // Default: 8192
-simpleSocket.DefaultReadBufferSize = 10240;
+simpleSocketModule.DefaultReadBufferSize = 10240;
 
 // initial value for 'rsaKeySize' property
 // Default: 512
-simpleSocket.DefaultRSAKeySize = 4096;
+simpleSocketModule.DefaultRSAKeySize = 4096;
 ```
 
 ## Documentation
