@@ -332,3 +332,6 @@ You can change this, by setting the `maxPackageSize` property:
 socket.maxPackageSize = 597923979;
 ```
 
+## Documentation
+
+The full API documentation can be found [here](https://mkloubert.github.io/node-simple-socket/).
