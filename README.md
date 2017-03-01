@@ -4,6 +4,14 @@ Wrapper for [Node.js sockets](https://nodejs.org/api/net.html#net_class_net_sock
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=MMUUNRQ8ZUJEN) [![](https://api.flattr.com/button/flattr-badge-large.png)](https://flattr.com/submit/auto?fid=o62pkd&url=https%3A%2F%2Fgithub.com%2Fmkloubert%2Fnode-simple-socket)
 
+## How does it work?
+
+Sockets are wrapped by a [class](https://mkloubert.github.io/node-simple-socket/classes/_index_.simplesocket.html) that exchanges data between two endpoints by encrypting and compressing it.
+
+You do not need to setup anything for the encryption and compression ... you only need to start a server and connect with a client by using the new class(es)!
+
+The new "sockets" make a handshake and share a (strong) random password with the help of RSA automatically. This is done at the time, you start to send and receive data.
+
 ## Install
 
 ```bash
