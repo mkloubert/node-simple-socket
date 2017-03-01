@@ -19,7 +19,7 @@ This is done at the time, you start to send and receive data.
 ## Install
 
 ```bash
-npm install simple-socket --save
+npm install node-simple-socket --save
 ```
 
 ## Usage
@@ -27,13 +27,13 @@ npm install simple-socket --save
 ### Import
 
 ```javascript
-var simpleSocket = require('simple-socket');
+var simpleSocket = require('node-simple-socket');
 ```
 
 The [TypeScript](https://www.typescriptlang.org/) way:
 
 ```typescript
-import * as simpleSocket from 'simple-socket';
+import * as simpleSocket from 'node-simple-socket';
 ```
 
 ### Create a server
