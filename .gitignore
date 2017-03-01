@@ -2,4 +2,4 @@ pushall.sh
 **/*.map
 node_modules
 /testfile.out.txt
-/typedoc.cmd
+/gen-typedoc.cmd
