@@ -1,5 +1,6 @@
 pushall.sh
-src/**/*
+**/*.map
+**/*.ts
 sandbox.js
 testfile.txt
 testfile.out.txt
