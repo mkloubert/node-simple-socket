@@ -47,6 +47,9 @@ export const DEFAULT_ENCODING = 'utf8';
  * The default size for a maximum data package.
  */
 export let DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+/**
+ * Default buffer size for reading streams.
+ */
 export let DefaultReadBufferSize = DEFAULT_DEFAULT_READ_BUFFER_SIZE;
 /**
  * The default RSA key size.

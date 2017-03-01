@@ -2,3 +2,4 @@ pushall.sh
 lib/**/*.map
 node_modules
 /testfile.out.txt
+/typedoc.cmd
