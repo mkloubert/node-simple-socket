@@ -1,6 +1,6 @@
 {
   "name": "simple-socket",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Wrapper for sockets that makes it easy to send data compressed and crypted (RSA / AES).",
   "main": "lib/index.js",
   "scripts": {
@@ -17,7 +17,8 @@
     "aes",
     "encrypted",
     "gzip",
-    "compressed"
+    "compressed",
+    "typescript"
   ],
   "author": "mkloubert",
   "license": "MIT",

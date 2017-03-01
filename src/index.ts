@@ -25,7 +25,9 @@
 
 import * as Crypto from 'crypto';
 import * as Events from 'events';
+import * as FS from 'fs';
 import * as Net from 'net';
+import * as Path from 'path';
 const RandomString = require("randomstring");
 const RSA = require('node-rsa');
 import * as ssocket_helpers from './helpers';
@@ -33,7 +35,9 @@ import * as ZLib from 'zlib';
 
 
 const DEFAULT_MAX_PACKAGE_SIZE = 16777211;
+const DEFAULT_DEFAULT_READ_BUFFER_SIZE = 8192;
 const DEFAULT_RSA_KEY_SIZE = 512;
+
 
 /**
  * The default (string) encoding.
@@ -42,11 +46,12 @@ export const DEFAULT_ENCODING = 'utf8';
 /**
  * The default size for a maximum data package.
  */
-export const DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+export let DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+export let DefaultReadBufferSize = DEFAULT_DEFAULT_READ_BUFFER_SIZE;
 /**
  * The default RSA key size.
  */
-export const DefaultRSAKeySize = DEFAULT_RSA_KEY_SIZE;
+export let DefaultRSAKeySize = DEFAULT_RSA_KEY_SIZE;
 
 /**
  * A compression result.
@@ -74,17 +79,47 @@ export interface CompressionResult {
     uncompressed: Buffer;
 }
 
-export type DataTransformer = (ctx: DataTransformerContext) => Buffer | PromiseLike<Buffer>
+/**
+ * A data transformer.
+ * 
+ * @param {DataTransformerContext} ctx The context.
+ * 
+ * @return {DataTransformerResult} The result.
+ */
+export type DataTransformer = (ctx: DataTransformerContext) => DataTransformerResult;
 
+/**
+ * A context for a data transformer.
+ */
 export interface DataTransformerContext {
+    /**
+     * The (source) data.
+     */
     readonly data: Buffer;
+    /**
+     * The direction.
+     */
     readonly direction: DataTransformerDirection;
 }
 
+/**
+ * List of data transform directions.
+ */
 export enum DataTransformerDirection {
+    /**
+     * Transform UNtransformed data.
+     */
     Transform = 1,
+    /**
+     * Restore transformed data.
+     */
     Restore = 2,
 }
+
+/**
+ * A result for of a data transformer.
+ */
+export type DataTransformerResult = Buffer | PromiseLike<Buffer>;
 
 /**
  * A listener callback.
@@ -156,6 +191,11 @@ export class SimpleSocket extends Events.EventEmitter {
     public compress = true;
 
     /**
+     * Gets the path of the working directory.
+     */
+    public cwd: string;
+
+    /**
      * A custom function that transformes data
      * before it is send or after it has been received.
      */
@@ -166,6 +206,8 @@ export class SimpleSocket extends Events.EventEmitter {
      */
     public dispose() {
         let me = this;
+
+        me.removeAllListeners();
         
         me.end().then(() => {
             me.emit('disposed');
@@ -281,6 +323,23 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * Returns the working directory.
+     * 
+     * @return {string} The working directory.
+     */
+    protected getCwd(): string {
+        let result = ssocket_helpers.toStringSafe(this.cwd);
+        if (ssocket_helpers.isEmptyString(result)) {
+            result = process.cwd();
+        }
+        else if (!Path.isAbsolute(result)) {
+            result = Path.join(process.cwd(), result);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns the (string) encoding that should be used by that socket.
      * 
      * @return {string} The encoding.
@@ -319,6 +378,23 @@ export class SimpleSocket extends Events.EventEmitter {
         }
         if (isNaN(result)) {
             result = DEFAULT_RSA_KEY_SIZE;
+        }
+
+        return result;
+    }
+
+    /**
+     * Returns the buffer size for reading streams.
+     * 
+     * @return {number} The buffer size.
+     */
+    protected getReadBufferSize(): number {
+        let result = parseInt(ssocket_helpers.toStringSafe(this.readBufferSize).trim());
+        if (isNaN(result)) {
+            result = parseInt(ssocket_helpers.toStringSafe(DefaultReadBufferSize).trim());
+        }
+        if (isNaN(result)) {
+            result = DEFAULT_DEFAULT_READ_BUFFER_SIZE;
         }
 
         return result;
@@ -657,6 +733,60 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * The default buffer size for reading a stream.
+     */
+    public readBufferSize = DefaultReadBufferSize;
+
+    /**
+     * Reads data from remote and writes it to a file on this machine.
+     * 
+     * @param {string} path The path to the target file.
+     * @param {string|number} [flags] The custom flags for opening the target file.
+     * 
+     * @return {PromiseLike<number>} The promise.
+     */
+    public readFile(path: string, flags: string | number = 'w'): Promise<number> {
+        let me = this;
+
+        if (!Path.isAbsolute(path)) {
+            path = Path.join(me.getCwd(), path);
+        }
+
+        return new Promise<number>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                FS.open(path, flags, (err, fdTarget) => {
+                    if (err) {
+                        completed(err);
+                    }
+                    else {
+                        let closeFile = (err: any, bytesWritten?: number) => {
+                            FS.close(fdTarget, (e) => {
+                                if (e) {
+                                    completed(e, bytesWritten);
+                                }
+                                else {
+                                    completed(err, bytesWritten);
+                                }
+                            });
+                        };
+
+                        me.readStream(fdTarget).then((bytesWritten) => {
+                            closeFile(null, bytesWritten);
+                        }, (err) => {
+                            closeFile(err);
+                        });
+                    }
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
      * Reads data as JSON object.
      * 
      * @return {PromiseLike<T>} The promise.
@@ -687,6 +817,103 @@ export class SimpleSocket extends Events.EventEmitter {
                 }, (err) => {
                     completed(err);
                 });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
+     * Reads data from remote and writes it to a stream on this machine.
+     * 
+     * @param {number} fdTarget The stream pointer of the target.
+     * 
+     * @return {PromiseLike<number>} The promise.
+     */
+    public readStream(fdTarget: number): PromiseLike<number> {
+        let me = this;
+
+        return new Promise<number>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                let bytesWritten = 0;
+
+                let nextChunk: () => void;
+
+                let sendAnswer = (err?: any) => {
+                    let errMsg = ssocket_helpers.toStringSafe(err);
+                    if (ssocket_helpers.isEmptyString(errMsg)) {
+                        errMsg = '';
+                    }
+
+                    me.write(errMsg).then(() => {
+                        if (errMsg) {
+                            completed(err);
+                        }
+                        else {
+                            nextChunk();
+                        }
+                    }, (err) => {
+                        completed(err);
+                    });
+                };
+
+                nextChunk = () => {
+                    // check chunk block
+                    me.read().then((chunkBlock) => {
+                        try {
+                            let chunkLength = chunkBlock.readUInt32LE(0);
+                            if (chunkLength < 1) {
+                                // no more data
+                                completed(null, bytesWritten);
+                            }
+                            else {
+                                if (chunkLength > me.getMaxPackageSize()) {
+                                    // chunk is too big
+                                    sendAnswer(new Error('Chunk is too big!'));
+                                }
+                                else {
+                                    // write to stream
+
+                                    let hash = Buffer.alloc(32);
+                                    chunkBlock.copy(hash, 0, 4, 4 + hash.length);
+
+                                    let chunk = Buffer.alloc(chunkLength);
+                                    chunkBlock.copy(chunk, 0, 4 + hash.length);
+
+                                    let realHash = new Buffer(Crypto.createHash('sha256')
+                                                                    .update(chunk).digest('base64'),
+                                                              'base64');
+
+                                    if (hash.equals(realHash)) {
+                                        FS.write(fdTarget, chunk, (err, written) => {
+                                            if (!err) {
+                                                if (written > 0) {
+                                                    bytesWritten += written;
+                                                }
+                                            }
+
+                                            sendAnswer(err);
+                                        });
+                                    }
+                                    else {
+                                        // unique hashes
+                                        sendAnswer(new Error('Invalid chunk hash: ' + realHash.toString('hex')));
+                                    }
+                                }
+                            }
+                        }
+                        catch (e) {
+                            sendAnswer(e);
+                        }
+                    }, (err) => {
+                        sendAnswer(err);
+                    });
+                };
+
+                nextChunk();  // start reading chunks
             }
             catch (e) {
                 completed(e);
@@ -843,7 +1070,7 @@ export class SimpleSocket extends Events.EventEmitter {
 
             try {
                 let sendData = (uncryptedData: Buffer) => {
-                    if (!uncryptedData || uncryptedData.length < 1) {
+                    if (!uncryptedData) {
                         noDataSend();
                         return;
                     }
@@ -861,11 +1088,6 @@ export class SimpleSocket extends Events.EventEmitter {
                                 let b = cipher.final();
 
                                 let cryptedData = Buffer.concat([ a, b ]);
-
-                                if (cryptedData.length < 1) {
-                                    noDataSend();
-                                    return;
-                                }
 
                                 if (cryptedData.length > me.getMaxPackageSize()) {
                                     completed(null, null);  // maximum package size reached
@@ -920,6 +1142,57 @@ export class SimpleSocket extends Events.EventEmitter {
     }
 
     /**
+     * Sends the data of a file to the remote.
+     * 
+     * @param {string} path The path of the file to send.
+     * @param {number} [maxSize] The maximum number of bytes to send.
+     * @param {number} [bufferSize] The custom buffer size for the read operation(s).
+     * @param {string|number} [flags] The custom flags for opening the file.
+     * 
+     * @return {PromiseLike<number>} The promise.
+     */
+    public writeFile(path: string, maxSize?: number, bufferSize?: number, flags: string | number = 'r'): Promise<number> {
+        let me = this;
+
+        if (!Path.isAbsolute(path)) {
+            path = Path.join(me.getCwd(), path);
+        }
+
+        return new Promise<number>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                FS.open(path, flags, (err, fdSrc) => {
+                    if (err) {
+                        completed(err);
+                    }
+                    else {
+                        let closeFile = (err: any, bytesSend?: number) => {
+                            FS.close(fdSrc, (e) => {
+                                if (e) {
+                                    completed(e, bytesSend);
+                                }
+                                else {
+                                    completed(err, bytesSend);
+                                }
+                            });
+                        };
+
+                        me.writeStream(fdSrc, maxSize, bufferSize).then((bytesSend) => {
+                            closeFile(null, bytesSend);
+                        }, (err) => {
+                            closeFile(err);
+                        });
+                    }
+                });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
      * Sends an object / value as JSON string.
      * 
      * @param {T} obj The object to send.
@@ -946,6 +1219,139 @@ export class SimpleSocket extends Events.EventEmitter {
                 }, (err) => {
                     completed(err);
                 });
+            }
+            catch (e) {
+                completed(e);
+            }
+        });
+    }
+
+    /**
+     * Sends the data of a stream to the remote.
+     * 
+     * @param {number} fdSrc The stream pointer from where to read.
+     * @param {number} [maxSize] The maximum number of bytes to send.
+     * @param {number} [bufferSize] The custom buffer size for the read operation(s).
+     * 
+     * @return {PromiseLike<number>} The promise.
+     */
+    public writeStream(fdSrc: number, maxSize?: number, bufferSize?: number): PromiseLike<number> {
+        let me = this;
+        
+        bufferSize = parseInt(ssocket_helpers.toStringSafe(bufferSize).trim());
+        if (isNaN(bufferSize)) {
+            bufferSize = me.getReadBufferSize();
+        }
+
+        maxSize = parseInt(ssocket_helpers.toStringSafe(maxSize).trim());
+
+        return new Promise<number>((resolve, reject) => {
+            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+
+            try {
+                let remainingBytes = maxSize;
+                let bytesCount = 0;
+
+                let nextChunk: () => void;
+
+                let sendChunk = (chunk?: Buffer) => {
+                    try {
+                        if (!chunk) {
+                            chunk = Buffer.alloc(0);
+                        }
+
+                        // chunk size
+                        let chunkLength = Buffer.alloc(4);
+                        chunkLength.writeUInt32LE(chunk.length, 0);
+
+                        let hash: Buffer;
+                        if (chunk.length > 0) {
+                            hash = new Buffer(Crypto.createHash('sha256')
+                                                    .update(chunk).digest('base64'),
+                                              'base64');
+                        }
+                        else {
+                            hash = Buffer.alloc(0);  // we have no data to hash
+                        }
+
+                        // send to remote
+                        me.write(Buffer.concat([ chunkLength, hash, chunk ])).then(() => {
+                            if (chunk.length > 0) {
+                                // wait for answer
+                                me.readString().then((errMsg) => {
+                                    if (ssocket_helpers.isEmptyString(errMsg)) {
+                                        nextChunk();
+                                    }
+                                    else {
+                                        // error on remote side => abort
+                                        completed(new Error('Remote error: ' + ssocket_helpers.toStringSafe(errMsg)));
+                                    }
+                                }, (err) => {
+                                    completed(err);
+                                });
+                            }
+                            else {
+                                completed(null, bytesCount);  // we have finished
+                            }
+                        }, (err) => {
+                            completed(err);
+                        });
+                    }
+                    catch (e) {
+                        completed(e);
+                    }
+                };
+
+                nextChunk = () => {
+                    try {
+                        let buffer = Buffer.alloc(bufferSize);
+
+                        let bytesToRead: number;
+                        if (isNaN(remainingBytes)) {
+                            bytesToRead = buffer.length;
+                        }
+                        else {
+                            if (remainingBytes < 1) {
+                                remainingBytes = 0;
+                            }
+
+                            bytesToRead = remainingBytes;
+                            bytesToRead = Math.min(bytesToRead, buffer.length);
+                        }
+
+                        if (bytesToRead > 0) {
+                            // read chunk
+                            FS.read(fdSrc, buffer, 0, bytesToRead, null, (err, bytesRead) => {
+                                try {
+                                    let chunkToSend: Buffer;
+                                    if (bytesRead > 0) {
+                                        chunkToSend = Buffer.alloc(bytesRead);
+                                        buffer.copy(chunkToSend, 0, 0, bytesRead);
+                                    }
+                                    else {
+                                        chunkToSend = Buffer.alloc(0);
+                                    }
+
+                                    bytesCount += chunkToSend.length;
+                                    remainingBytes -= chunkToSend.length;
+
+                                    sendChunk(chunkToSend);
+                                }
+                                catch (e) {
+                                    completed(e);
+                                }
+                            });
+                        }
+                        else {
+                            sendChunk();  // nothing more to send
+                        }
+                    }
+                    catch (e) {
+                        completed(e);
+                    }
+                };
+
+                nextChunk();  // start sending chunks
             }
             catch (e) {
                 completed(e);
@@ -1088,6 +1494,10 @@ function asDataTransformerPromise(transformer: DataTransformer, direction: DataT
             };
 
             let transformerResult = transformer(transformerCtx);
+            if (ssocket_helpers.isNullOrUndefined(transformerResult)) {
+                transformerResult = transformerCtx.data;
+            }
+
             if ('function' === typeof transformerResult['then']) {
                 let promise = <PromiseLike<Buffer>>transformerResult;
 

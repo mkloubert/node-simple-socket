@@ -1,3 +1,4 @@
 pushall.sh
 lib/**/*
 node_modules
+/testfile.out.txt
