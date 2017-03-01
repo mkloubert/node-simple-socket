@@ -13,7 +13,8 @@ Sockets are wrapped by a [class](https://mkloubert.github.io/node-simple-socket/
 
 You do not need to setup anything for the encryption and compression ... you only need to start a server and connect with a client by using the new class(es)!
 
-The new "sockets" make a handshake and share a (strong) random password with the help of RSA automatically. This is done at the time, you start to send and receive data.
+The new "sockets" make a handshake and share a (strong) random password, which is used for the "live" communication, with the help of RSA in the background.
+This is done at the time, you start to send and receive data.
 
 ## Install
 
