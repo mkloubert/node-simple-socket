@@ -118,9 +118,9 @@ var myObject = {
 };
 
 senderSocket.writeJSON(myObject).then(function(sendData) {
-    // data has been send
-}, (err) => {
-    // could not send data
+    // object has been send
+}, function (err) {
+    // could not send object
 });
 ```
 
@@ -132,6 +132,74 @@ recipientSocket.readJSON().then(function(obj) {
     // obj.MK === '23979'
     // obj.PZSUX === true
 }, function(err) {
-    // could not receive obj
+    // could not receive object
 });
 ```
+
+#### Files
+
+Send:
+
+```javascript
+senderSocket.writeFile('./fileToSend.txt').then(function(numberOfBytesSend) {
+    // file has been send
+}, function (err) {
+    // could not send file
+});
+```
+
+Receive:
+
+```javascript
+recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numberOfBytesLoaded) {
+    // file has been received
+}, function (err) {
+    // could not receive file
+});
+```
+
+#### Streams
+
+Send:
+
+```javascript
+var fs = require('fs');
+
+fs.open('./fileToSend.txt', 'r', function(err, fd) {
+    if (err) 
+        // could not open file
+    }
+    else {
+        senderSocket.writeStream(fd).then(function(numberOfBytesSend) {
+            // file has been send
+        }, function (err) {
+            // could not send file
+        });
+    }
+});
+```
+
+Receive:
+
+```javascript
+var fs = require('fs');
+
+fs.open('./whereToWriteReceivedFileTo.txt', 'w', function(err, fd) {
+    if (err) {
+        // could not open stream
+    }
+    else {
+        recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numberOfBytesLoaded) {
+            // stream has been received
+        }, function (e) {
+            // could not receive stream
+        });
+    }
+});
+```
+
+#### Mixed (files and stream)
+
+##### File => Stream
+
+##### Stream => File
