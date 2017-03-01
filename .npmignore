@@ -6,3 +6,4 @@ sandbox.js
 testfile.txt
 testfile.out.txt
 gen-typedoc.cmd
+.vscode
