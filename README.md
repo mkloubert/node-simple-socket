@@ -189,7 +189,7 @@ fs.open('./whereToWriteReceivedFileTo.txt', 'w', function(err, fd) {
         // could not open stream
     }
     else {
-        recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numberOfBytesLoaded) {
+        recipientSocket.readStream(fd).then(function(numberOfBytesLoaded) {
             // stream has been received
         }, function (e) {
             // could not receive stream
