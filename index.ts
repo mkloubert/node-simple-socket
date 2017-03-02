@@ -369,6 +369,7 @@ export class SimpleSocket extends Events.EventEmitter {
      */
     protected getEncoding(): string {
         return ssocket_helpers.normalizeString(this.encoding) ||
+               ssocket_helpers.normalizeString(DefaultEncoding) ||
                DEFAULT_ENCODING;
     }
 
