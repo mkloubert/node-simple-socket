@@ -692,7 +692,7 @@ export class SimpleSocket extends Events.EventEmitter {
 
                                                 let uncryptedData = Buffer.concat([a, b]);
 
-                                                let isCompressed = 1 === uncryptedData.readUInt8(0);
+                                                let isCompressed = uncryptedData.readUInt8(0) > 127;
 
                                                 let compressedData = Buffer.alloc(uncryptedData.length - 1);
                                                 uncryptedData.copy(compressedData, 0, 1);
@@ -1108,11 +1108,19 @@ export class SimpleSocket extends Events.EventEmitter {
                             try {
                                 let cipher = Crypto.createCipher(me.algorithm, pwd);
 
+                                let n = Math.floor(Math.random() * 128);
+                                if (n > 127) {
+                                    n = 127;
+                                }
+                                else if (n < 0) {
+                                    n = 0;
+                                }
+
                                 let isCompressed = Buffer.alloc(1);
-                                isCompressed.writeUInt8(result.isCompressed ? 1 : 0, 0);
+                                isCompressed.writeUInt8(n + (result.isCompressed ? 128 : 0), 0);
 
                                 let a = cipher.update(Buffer.concat([ isCompressed,
-                                                                    result.data ]));
+                                                                      result.data ]));
                                 let b = cipher.final();
 
                                 let cryptedData = Buffer.concat([ a, b ]);
