@@ -103,7 +103,7 @@ class SimpleSocket extends Events.EventEmitter {
          */
         this.compress = exports.Compress;
         /**
-         * Gets the path of the working directory.
+         * The path of the working directory.
          */
         this.cwd = exports.DefaultCWD;
         /**

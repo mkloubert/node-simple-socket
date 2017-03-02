@@ -148,7 +148,7 @@ export declare class SimpleSocket extends Events.EventEmitter {
      */
     compress: boolean;
     /**
-     * Gets the path of the working directory.
+     * The path of the working directory.
      */
     cwd: string;
     /**

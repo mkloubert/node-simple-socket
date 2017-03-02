@@ -1,7 +1,7 @@
 {
   "name": "node-simple-socket",
-  "version": "1.3.1",
-  "description": "Wrapper for sockets that makes it easy to send data compressed and crypted (RSA / AES).",
+  "version": "1.3.2",
+  "description": "Wrapper for sockets that makes it easy to send data compressed and crypted (RSA / AES) automatic.",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,7 +22,12 @@
     "typescript",
     "secure",
     "tcp",
-    "ip"
+    "ip",
+    "simple",
+    "easy",
+    "asymetric",
+    "keys",
+    "passwords"
   ],
   "author": "mkloubert",
   "license": "MIT",
