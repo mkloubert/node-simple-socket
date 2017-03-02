@@ -16,6 +16,12 @@ You do not need to setup anything for the encryption and compression ... you onl
 The new "sockets" make a handshake and share a (strong) random password, which is used for the "live" communication, with the help of RSA in the background.
 This is done at the time, you start to send and receive data.
 
+## Migration
+
+### 1.x.x => 2.x.x and higher
+
+* since version 2.0 there is a protocol update to improve encryption ... communication between those versions will not work anymore
+
 ## Install
 
 ```bash
