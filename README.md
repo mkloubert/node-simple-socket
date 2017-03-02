@@ -398,5 +398,4 @@ The full API documentation can be found [here](https://mkloubert.github.io/node-
 
 ### 1.x.x => 2.x.x and higher
 
-* since version 2.0 there is a protocol update to improve encryption ... communication with older version (less than 2.0) might not work anymore, when using compression
-
+* since version 2.0 there is an important protocol update to improve encryption ... communication with older versions (less than 2.0) might not work anymore, when using compression
