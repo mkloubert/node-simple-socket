@@ -302,6 +302,14 @@ socket.on('rsakey.generating', function(keySize) {
 socket.on('rsakey.generated', function(keyPair) {
     // socket has been generted a RSA key pair
 });
+
+socket.on('stream.read', function(fdTarget, chunk, bytesWritten, hashOfChunk) {
+    // received stream / file chunk from remote
+});
+
+socket.on('stream.write', function(fdSrc, remainingBytes, chunk, hashOfChunk) {
+    // send stream / file chunk to remote
+});
 ```
 
 ### Settings

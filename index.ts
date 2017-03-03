@@ -932,6 +932,9 @@ export class SimpleSocket extends Events.EventEmitter {
                                                 if (written > 0) {
                                                     bytesWritten += written;
                                                 }
+
+                                                me.emit('stream.read',
+                                                        fdTarget, chunk, written, hash);
                                             }
 
                                             sendAnswer(err);
@@ -1327,6 +1330,9 @@ export class SimpleSocket extends Events.EventEmitter {
 
                         // send to remote
                         me.write(Buffer.concat([ chunkLength, hash, chunk ])).then(() => {
+                            me.emit('stream.write',
+                                    fdSrc, remainingBytes, chunk, hash);
+
                             if (chunk.length > 0) {
                                 // wait for answer
                                 me.readString().then((errMsg) => {
