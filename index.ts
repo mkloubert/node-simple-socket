@@ -485,13 +485,20 @@ export class SimpleSocket extends Events.EventEmitter {
                             ssocket_helpers.readSocket(me.socket, 2).then((buff) => {
                                 try {
                                     let pwdLength = buff.readUInt16LE(0);
-                                    
-                                    // and now the password itself
-                                    ssocket_helpers.readSocket(me.socket, pwdLength).then((pwd) => {
-                                        completed(null, pwd);
-                                    }, (err) => {
-                                        completed(err);
-                                    });
+                                    if (pwdLength <= me.getMaxPackageSize()) {
+                                        // and now the password itself
+                                        ssocket_helpers.readSocket(me.socket, pwdLength).then((pwd) => {
+                                            completed(null, pwd);
+                                        }, (err) => {
+                                            completed(err);
+                                        });
+                                    }
+                                    else {
+                                        // maximum package size reached
+
+                                        me.socket.end();
+                                        completed(null, null);
+                                    }
                                 }
                                 catch (e) {
                                     completed(e);
@@ -577,61 +584,69 @@ export class SimpleSocket extends Events.EventEmitter {
                     try {
                         let publicKeyLength = buff.readUInt32LE(0);
 
-                        ssocket_helpers.readSocket(me.socket, publicKeyLength).then((buff) => {
-                            try {
-                                let transformerPromise = asDataTransformerPromise(me.handshakeTransformer,
-                                                                                  DataTransformerDirection.Restore,
-                                                                                  buff);
+                        if (publicKeyLength <= me.getMaxPackageSize()) {
+                            ssocket_helpers.readSocket(me.socket, publicKeyLength).then((buff) => {
+                                try {
+                                    let transformerPromise = asDataTransformerPromise(me.handshakeTransformer,
+                                                                                    DataTransformerDirection.Restore,
+                                                                                    buff);
 
-                                transformerPromise.then((untransformedBuffer) => {
-                                    try {
-                                        let publicKey = untransformedBuffer.toString(me.getEncoding());
-                                        let key = RSA(publicKey);
+                                    transformerPromise.then((untransformedBuffer) => {
+                                        try {
+                                            let publicKey = untransformedBuffer.toString(me.getEncoding());
+                                            let key = RSA(publicKey);
 
-                                        // generate and send password
-                                        me.generatePassword().then((pwd) => {
-                                            try {
-                                                let pwdLength = Buffer.alloc(2);
-                                                pwdLength.writeUInt16LE(pwd.length, 0);
+                                            // generate and send password
+                                            me.generatePassword().then((pwd) => {
+                                                try {
+                                                    let pwdLength = Buffer.alloc(2);
+                                                    pwdLength.writeUInt16LE(pwd.length, 0);
 
-                                                // first send size of password
-                                                me.socket.write(pwdLength, (err) => {
-                                                    if (err) {
-                                                        completed(err);
-                                                        return;
-                                                    }
-
-                                                    // and now the password itself
-                                                    me.socket.write(pwd, (err) => {
+                                                    // first send size of password
+                                                    me.socket.write(pwdLength, (err) => {
                                                         if (err) {
                                                             completed(err);
+                                                            return;
                                                         }
-                                                        else {
-                                                            completed(null, pwd);
-                                                        }
+
+                                                        // and now the password itself
+                                                        me.socket.write(pwd, (err) => {
+                                                            if (err) {
+                                                                completed(err);
+                                                            }
+                                                            else {
+                                                                completed(null, pwd);
+                                                            }
+                                                        });
                                                     });
-                                                });
-                                            }
-                                            catch (e) {
-                                                completed(e);
-                                            }
-                                        }, (err) => {
-                                            completed(err);
-                                        });
-                                    }
-                                    catch (e) {
-                                        completed(e);
-                                    }
-                                }, (err) => {
-                                    completed(err);
-                                });
-                            }
-                            catch (e) {
-                                completed(e);
-                            }
-                        }, (err) => {
-                            completed(err);
-                        });
+                                                }
+                                                catch (e) {
+                                                    completed(e);
+                                                }
+                                            }, (err) => {
+                                                completed(err);
+                                            });
+                                        }
+                                        catch (e) {
+                                            completed(e);
+                                        }
+                                    }, (err) => {
+                                        completed(err);
+                                    });
+                                }
+                                catch (e) {
+                                    completed(e);
+                                }
+                            }, (err) => {
+                                completed(err);
+                            });
+                        }
+                        else {
+                            // maximum package size reached
+
+                            me.socket.end();
+                            completed(null, null);
+                        }
                     }
                     catch (e) {
                         completed(e);
