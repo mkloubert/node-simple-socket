@@ -332,6 +332,9 @@ You can define a custom password generator by setting the `passwordGenerator` pr
 serverSocket.passwordGenerator = function() {
     // generate a password as
     // buffer or string
+    // that should be encrypted with the
+    // received RSA public key
+    // of the connected client
     // 
     // you can return it directly
     // or as promise, if you work async
