@@ -303,7 +303,7 @@ socket.on('rsakey.generated', function(keyPair) {
     // socket has been generted a RSA key pair
 });
 
-socket.on('stream.read', function(fdTarget, chunk, bytesWritten, hashOfChunk) {
+socket.on('stream.read', function(fdTarget, chunk, bytesRead, hashOfChunk) {
     // received stream / file chunk from remote
 });
 
