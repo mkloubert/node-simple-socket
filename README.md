@@ -374,7 +374,7 @@ simpleSocketModule.DefaultCWD = 'E:/test';
 
 // initial value for 'dataTransformer' property
 // Default: (undefined)
-simpleSocketModule.DefaultDataTransformer = function(untransformedData){
+simpleSocketModule.DefaultDataTransformer = function(untransformedData) {
     // return transformed data
 };
 
@@ -384,13 +384,19 @@ simpleSocketModule.DefaultEncoding = 'ascii';
 
 // initial value for 'handshakeTransformer' property
 // Default: (undefined)
-simpleSocketModule.DefaultHandshakeTransformer = function(untransformedData){
+simpleSocketModule.DefaultHandshakeTransformer = function(untransformedData) {
     // return transformed data
 };
 
 // initial value for 'maxPackageSize' property
 // Default: 16777211
 simpleSocketModule.DefaultMaxPackageSize = 239795979;
+
+// initial value for 'passwordGenerator' property
+// Default: (undefined)
+simpleSocketModule.DefaultPasswordGenerator = function() {
+    // return generated password
+};
 
 // initial value for 'readBufferSize' property
 // Default: 8192
