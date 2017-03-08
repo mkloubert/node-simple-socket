@@ -30,6 +30,10 @@ export declare let DefaultHandshakeTransformer: DataTransformer;
  */
 export declare let DefaultMaxPackageSize: number;
 /**
+ * The default password generator.
+ */
+export declare let DefaultPasswordGenerator: PasswordGenerator;
+/**
  * Default buffer size for reading streams.
  */
 export declare let DefaultReadBufferSize: number;
@@ -107,6 +111,16 @@ export declare type DataTransformerResult = Buffer | PromiseLike<Buffer>;
  * @param {SimpleSocket} [socket] The socket if no error ocurred.
  */
 export declare type ListenCallback = (err: any, socket?: SimpleSocket) => void;
+/**
+ * A password generator.
+ *
+ * @return {PasswordGeneratorResult} The result.
+ */
+export declare type PasswordGenerator = () => PasswordGeneratorResult;
+/**
+ * The result of a password generator.
+ */
+export declare type PasswordGeneratorResult = Buffer | PromiseLike<Buffer> | string | PromiseLike<string>;
 /**
  * List of socket types.
  */
@@ -241,7 +255,7 @@ export declare class SimpleSocket extends Events.EventEmitter {
     /**
      * Defines a custom logic to generate a password (for the connection).
      */
-    passwordGenerator: () => Buffer | PromiseLike<Buffer> | string | PromiseLike<string>;
+    passwordGenerator: PasswordGenerator;
     /**
      * Reads data from the remote.
      *

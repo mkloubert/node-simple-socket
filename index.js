@@ -27,7 +27,6 @@ const Events = require('events');
 const FS = require('fs');
 const Net = require('net');
 const Path = require('path');
-const RandomString = require("randomstring");
 const RSA = require('node-rsa');
 const ssocket_helpers = require('./helpers');
 const ZLib = require('zlib');
@@ -125,6 +124,10 @@ class SimpleSocket extends Events.EventEmitter {
          */
         this.maxPackageSize = exports.DefaultMaxPackageSize;
         /**
+         * Defines a custom logic to generate a password (for the connection).
+         */
+        this.passwordGenerator = exports.DefaultPasswordGenerator;
+        /**
          * The default buffer size for reading a stream.
          */
         this.readBufferSize = exports.DefaultReadBufferSize;
@@ -208,10 +211,16 @@ class SimpleSocket extends Events.EventEmitter {
                 let pwdGen = me.passwordGenerator;
                 if (!pwdGen) {
                     pwdGen = () => {
-                        return new Buffer(RandomString.generate({
-                            length: 48,
-                            charset: 'alphanumeric',
-                        }), me.getEncoding());
+                        return new Promise((resolve, reject) => {
+                            Crypto.randomBytes(48, (err, randBuff) => {
+                                if (err) {
+                                    reject(err);
+                                }
+                                else {
+                                    resolve(randBuff);
+                                }
+                            });
+                        });
                     };
                 }
                 let returnPassword = (pwd) => {

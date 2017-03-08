@@ -28,7 +28,6 @@ import * as Events from 'events';
 import * as FS from 'fs';
 import * as Net from 'net';
 import * as Path from 'path';
-const RandomString = require("randomstring");
 const RSA = require('node-rsa');
 import * as ssocket_helpers from './helpers';
 import * as ZLib from 'zlib';
@@ -67,6 +66,10 @@ export let DefaultHandshakeTransformer: DataTransformer;
  * The default size for a maximum data package.
  */
 export let DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+/**
+ * The default password generator.
+ */
+export let DefaultPasswordGenerator: PasswordGenerator;
 /**
  * Default buffer size for reading streams.
  */
@@ -151,6 +154,18 @@ export type DataTransformerResult = Buffer | PromiseLike<Buffer>;
  * @param {SimpleSocket} [socket] The socket if no error ocurred.
  */
 export type ListenCallback = (err: any, socket?: SimpleSocket) => void;
+
+/**
+ * A password generator.
+ * 
+ * @return {PasswordGeneratorResult} The result.
+ */
+export type PasswordGenerator = () => PasswordGeneratorResult;
+
+/**
+ * The result of a password generator.
+ */
+export type PasswordGeneratorResult = Buffer | PromiseLike<Buffer> | string | PromiseLike<string>;
 
 /**
  * List of socket types.
@@ -301,10 +316,16 @@ export class SimpleSocket extends Events.EventEmitter {
                 let pwdGen = me.passwordGenerator;
                 if (!pwdGen) {
                     pwdGen = () => {
-                        return new Buffer(RandomString.generate({
-                            length: 48,
-                            charset: 'alphanumeric',
-                        }), me.getEncoding());
+                        return new Promise<Buffer>((resolve, reject) => {
+                            Crypto.randomBytes(48, (err, randBuff) => {
+                                if (err) {
+                                    reject(err);
+                                }
+                                else {
+                                    resolve(randBuff);
+                                }
+                            });
+                        });
                     };
                 }
 
@@ -588,8 +609,8 @@ export class SimpleSocket extends Events.EventEmitter {
                             ssocket_helpers.readSocket(me.socket, publicKeyLength).then((buff) => {
                                 try {
                                     let transformerPromise = asDataTransformerPromise(me.handshakeTransformer,
-                                                                                    DataTransformerDirection.Restore,
-                                                                                    buff);
+                                                                                      DataTransformerDirection.Restore,
+                                                                                      buff);
 
                                     transformerPromise.then((untransformedBuffer) => {
                                         try {
@@ -674,7 +695,7 @@ export class SimpleSocket extends Events.EventEmitter {
     /**
      * Defines a custom logic to generate a password (for the connection).
      */
-    public passwordGenerator: () => Buffer | PromiseLike<Buffer> | string | PromiseLike<string>;
+    public passwordGenerator = DefaultPasswordGenerator;
 
     /**
      * Reads data from the remote.
