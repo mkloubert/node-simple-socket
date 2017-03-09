@@ -274,7 +274,7 @@ export declare class SimpleSocket extends Events.EventEmitter {
      *
      * @return {PromiseLike<number>} The promise.
      */
-    readFile(path: string, flags?: string | number): Promise<number>;
+    readFile(path: string, flags?: string | number): PromiseLike<number>;
     /**
      * Reads data as JSON object.
      *

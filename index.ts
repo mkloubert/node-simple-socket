@@ -805,7 +805,7 @@ export class SimpleSocket extends Events.EventEmitter {
      * 
      * @return {PromiseLike<number>} The promise.
      */
-    public readFile(path: string, flags: string | number = 'w'): Promise<number> {
+    public readFile(path: string, flags: string | number = 'w'): PromiseLike<number> {
         let me = this;
 
         if (!Path.isAbsolute(path)) {

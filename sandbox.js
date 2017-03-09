@@ -1,5 +1,5 @@
 var fs = require('fs');
-var simpleSocket = require('./lib');
+var simpleSocket = require('./index');
 
 var port = 30904;
 
