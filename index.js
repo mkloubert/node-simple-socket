@@ -168,6 +168,8 @@ class SimpleSocket extends Events.EventEmitter {
      *
      * @param {any} [data] The optional data to send.
      * @param {string} [encoding] The encoding to use.
+     *
+     * @return {Promise<any>} The promise.
      */
     end(data, encoding) {
         let me = this;
@@ -201,7 +203,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Generates a password based on the 'passwordGenerator' property.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
     generatePassword() {
         let me = this;
@@ -328,7 +330,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Makes a CLIENT handshake.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
     makeClientHandshake() {
         let me = this;
@@ -400,7 +402,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Makes a handshake if needed.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
     makeHandshakeIfNeeded() {
         let me = this;
@@ -440,7 +442,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Makes a SERVER handshake.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
     makeServerHandshake() {
         let me = this;
@@ -523,7 +525,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Reads data from the remote.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
     read() {
         let me = this;
@@ -609,7 +611,7 @@ class SimpleSocket extends Events.EventEmitter {
      * @param {string} path The path to the target file.
      * @param {string|number} [flags] The custom flags for opening the target file.
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
     readFile(path, flags = 'w') {
         let me = this;
@@ -650,7 +652,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Reads data as JSON object.
      *
-     * @return {PromiseLike<T>} The promise.
+     * @return {Promise<T>} The promise.
      */
     readJSON() {
         let me = this;
@@ -685,7 +687,7 @@ class SimpleSocket extends Events.EventEmitter {
      *
      * @param {number} fdTarget The stream pointer of the target.
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
     readStream(fdTarget) {
         let me = this;
@@ -767,7 +769,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Reads data as string.
      *
-     * @return {PromiseLike<string>} The promise.
+     * @return {Promise<string>} The promise.
      */
     readString() {
         let me = this;
@@ -828,7 +830,7 @@ class SimpleSocket extends Events.EventEmitter {
      *
      * @param {any} data The data to compress.
      *
-     * @return {PromiseLike<CompressionResult>} The promise.
+     * @return {Promise<CompressionResult>} The promise.
      */
     tryCompress(data) {
         let me = this;
@@ -877,7 +879,7 @@ class SimpleSocket extends Events.EventEmitter {
     /**
      * Reads data from the remote.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
     write(data) {
         let me = this;
@@ -962,7 +964,7 @@ class SimpleSocket extends Events.EventEmitter {
      * @param {number} [bufferSize] The custom buffer size for the read operation(s).
      * @param {string|number} [flags] The custom flags for opening the file.
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
     writeFile(path, maxSize, bufferSize, flags = 'r') {
         let me = this;
@@ -1005,7 +1007,7 @@ class SimpleSocket extends Events.EventEmitter {
      *
      * @param {T} obj The object to send.
      *
-     * @returns {PromiseLike<Buffer>} The promise.
+     * @returns {Promise<Buffer>} The promise.
      */
     writeJSON(obj) {
         let me = this;
@@ -1037,7 +1039,7 @@ class SimpleSocket extends Events.EventEmitter {
      * @param {number} [maxSize] The maximum number of bytes to send.
      * @param {number} [bufferSize] The custom buffer size for the read operation(s).
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
     writeStream(fdSrc, maxSize, bufferSize) {
         let me = this;
@@ -1154,7 +1156,7 @@ exports.SimpleSocket = SimpleSocket;
  * @param {number} port The TCP port of the remote machine.
  * @param {string} host The host (address).
  *
- * @return {PromiseLike<SimpleSocket>} The promise.
+ * @return {Promise<SimpleSocket>} The promise.
  */
 function connect(port, host) {
     return new Promise((resolve, reject) => {
@@ -1221,7 +1223,7 @@ exports.createServer = createServer;
  * @param {number} port The TCP port to listen on.
  * @param {ListenCallback} cb The listener callback.
  *
- * @return {PromiseLike<Net.Server>} The promise.
+ * @return {Promise<Net.Server>} The promise.
  */
 function listen(port, cb) {
     return new Promise((resolve, reject) => {

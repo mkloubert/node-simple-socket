@@ -183,14 +183,16 @@ export declare class SimpleSocket extends Events.EventEmitter {
      *
      * @param {any} [data] The optional data to send.
      * @param {string} [encoding] The encoding to use.
+     *
+     * @return {Promise<any>} The promise.
      */
-    end(data?: any, encoding?: string): PromiseLike<any>;
+    end(data?: any, encoding?: string): Promise<any>;
     /**
      * Generates a password based on the 'passwordGenerator' property.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
-    protected generatePassword(): PromiseLike<Buffer>;
+    protected generatePassword(): Promise<Buffer>;
     /**
      * Returns the working directory.
      *
@@ -229,21 +231,21 @@ export declare class SimpleSocket extends Events.EventEmitter {
     /**
      * Makes a CLIENT handshake.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
-    protected makeClientHandshake(): PromiseLike<Buffer>;
+    protected makeClientHandshake(): Promise<Buffer>;
     /**
      * Makes a handshake if needed.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
-    makeHandshakeIfNeeded(): PromiseLike<Buffer>;
+    makeHandshakeIfNeeded(): Promise<Buffer>;
     /**
      * Makes a SERVER handshake.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
-    protected makeServerHandshake(): PromiseLike<Buffer>;
+    protected makeServerHandshake(): Promise<Buffer>;
     /**
      * Defines the maximum size of a package.
      */
@@ -259,9 +261,9 @@ export declare class SimpleSocket extends Events.EventEmitter {
     /**
      * Reads data from the remote.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
-    read(): PromiseLike<Buffer>;
+    read(): Promise<Buffer>;
     /**
      * The default buffer size for reading a stream.
      */
@@ -272,29 +274,29 @@ export declare class SimpleSocket extends Events.EventEmitter {
      * @param {string} path The path to the target file.
      * @param {string|number} [flags] The custom flags for opening the target file.
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
-    readFile(path: string, flags?: string | number): PromiseLike<number>;
+    readFile(path: string, flags?: string | number): Promise<number>;
     /**
      * Reads data as JSON object.
      *
-     * @return {PromiseLike<T>} The promise.
+     * @return {Promise<T>} The promise.
      */
-    readJSON<T>(): PromiseLike<T>;
+    readJSON<T>(): Promise<T>;
     /**
      * Reads data from remote and writes it to a stream on this machine.
      *
      * @param {number} fdTarget The stream pointer of the target.
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
-    readStream(fdTarget: number): PromiseLike<number>;
+    readStream(fdTarget: number): Promise<number>;
     /**
      * Reads data as string.
      *
-     * @return {PromiseLike<string>} The promise.
+     * @return {Promise<string>} The promise.
      */
-    readString(): PromiseLike<string>;
+    readString(): Promise<string>;
     /**
      * The RSA key size.
      */
@@ -318,15 +320,15 @@ export declare class SimpleSocket extends Events.EventEmitter {
      *
      * @param {any} data The data to compress.
      *
-     * @return {PromiseLike<CompressionResult>} The promise.
+     * @return {Promise<CompressionResult>} The promise.
      */
-    protected tryCompress(data: any): PromiseLike<CompressionResult>;
+    protected tryCompress(data: any): Promise<CompressionResult>;
     /**
      * Reads data from the remote.
      *
-     * @param {PromiseLike<Buffer>} The promise.
+     * @param {Promise<Buffer>} The promise.
      */
-    write(data: any): PromiseLike<Buffer>;
+    write(data: any): Promise<Buffer>;
     /**
      * Sends the data of a file to the remote.
      *
@@ -335,7 +337,7 @@ export declare class SimpleSocket extends Events.EventEmitter {
      * @param {number} [bufferSize] The custom buffer size for the read operation(s).
      * @param {string|number} [flags] The custom flags for opening the file.
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
     writeFile(path: string, maxSize?: number, bufferSize?: number, flags?: string | number): Promise<number>;
     /**
@@ -343,9 +345,9 @@ export declare class SimpleSocket extends Events.EventEmitter {
      *
      * @param {T} obj The object to send.
      *
-     * @returns {PromiseLike<Buffer>} The promise.
+     * @returns {Promise<Buffer>} The promise.
      */
-    writeJSON<T>(obj: T): PromiseLike<Buffer>;
+    writeJSON<T>(obj: T): Promise<Buffer>;
     /**
      * Sends the data of a stream to the remote.
      *
@@ -353,9 +355,9 @@ export declare class SimpleSocket extends Events.EventEmitter {
      * @param {number} [maxSize] The maximum number of bytes to send.
      * @param {number} [bufferSize] The custom buffer size for the read operation(s).
      *
-     * @return {PromiseLike<number>} The promise.
+     * @return {Promise<number>} The promise.
      */
-    writeStream(fdSrc: number, maxSize?: number, bufferSize?: number): PromiseLike<number>;
+    writeStream(fdSrc: number, maxSize?: number, bufferSize?: number): Promise<number>;
 }
 /**
  * Connects to a remote (server).
@@ -363,9 +365,9 @@ export declare class SimpleSocket extends Events.EventEmitter {
  * @param {number} port The TCP port of the remote machine.
  * @param {string} host The host (address).
  *
- * @return {PromiseLike<SimpleSocket>} The promise.
+ * @return {Promise<SimpleSocket>} The promise.
  */
-export declare function connect(port: number, host?: string): PromiseLike<SimpleSocket>;
+export declare function connect(port: number, host?: string): Promise<SimpleSocket>;
 /**
  * Creates a new instance.
  *
@@ -397,6 +399,6 @@ export declare function createServer(socket?: Net.Socket): SimpleSocket;
  * @param {number} port The TCP port to listen on.
  * @param {ListenCallback} cb The listener callback.
  *
- * @return {PromiseLike<Net.Server>} The promise.
+ * @return {Promise<Net.Server>} The promise.
  */
-export declare function listen(port: number, cb: ListenCallback): PromiseLike<Net.Server>;
+export declare function listen(port: number, cb: ListenCallback): Promise<Net.Server>;

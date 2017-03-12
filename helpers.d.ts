@@ -59,7 +59,7 @@ export declare function normalizeString(val: any, normalizer?: (str: string) => 
  *
  * @return {Promise<Buffer>} The promise.
  */
-export declare function readSocket(socket: Net.Socket, numberOfBytes?: number): PromiseLike<Buffer>;
+export declare function readSocket(socket: Net.Socket, numberOfBytes?: number): Promise<Buffer>;
 /**
  * Converts a value to a boolean.
  *

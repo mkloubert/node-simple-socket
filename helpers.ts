@@ -133,7 +133,7 @@ export function normalizeString(val: any, normalizer?: (str: string) => string):
  * 
  * @return {Promise<Buffer>} The promise.
  */
-export function readSocket(socket: Net.Socket, numberOfBytes?: number): PromiseLike<Buffer> {
+export function readSocket(socket: Net.Socket, numberOfBytes?: number): Promise<Buffer> {
     return new Promise<Buffer>((resolve, reject) => {
         let completed = createSimplePromiseCompletedAction(resolve, reject);
 
