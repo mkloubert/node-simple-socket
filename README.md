@@ -282,33 +282,32 @@ recipientSocket.readFile('./whereToWriteReceivedFileTo.txt').then(function(numbe
 socket.on('close', function() {
     // socket closed
 });
-
 socket.on('disposed', function() {
     // socket has been disposed
 });
-
 socket.on('error', function(err) {
     // an error occurred
 });
-
 socket.on('handshake', function(pwd) {
     // socket has made a handshake
 });
-
 socket.on('rsakey.generating', function(keySize) {
     // socket is generting a RSA key pair
 });
-
 socket.on('rsakey.generated', function(keyPair) {
     // socket has been generted a RSA key pair
 });
-
 socket.on('stream.read', function(fdTarget, chunk, bytesWritten, hashOfChunk) {
     // received stream / file chunk from remote
 });
-
 socket.on('stream.write', function(fdSrc, remainingBytes, chunk, hashOfChunk) {
     // send stream / file chunk to remote
+});
+socket.on('write.after', function(uncryptedData, isCompressed, dataLength, cryptedData) {
+    // socket has (tried to) send data
+});
+socket.on('write.before', function(uncryptedData, isCompressed, dataLength, cryptedData) {
+    // socket is being to send data
 });
 ```
 

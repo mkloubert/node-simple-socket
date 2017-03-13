@@ -1174,22 +1174,43 @@ export class SimpleSocket extends Events.EventEmitter {
                                 let dataLength = Buffer.alloc(4);
                                 dataLength.writeUInt32LE(cryptedData.length, 0);
 
+                                // emit 'write.before'
+                                me.emit('write.before',
+                                        uncryptedData, isCompressed, dataLength, cryptedData);
+
+                                let emitWriterAfterArgs = [];
+                                let writeCompleted = (err: any, additionalArgs = []) => {
+                                    // emit 'write.after'
+                                    me.emit
+                                      .apply(me,
+                                             [ 'write.after', uncryptedData, isCompressed ].concat(additionalArgs));
+
+                                    if (err) {
+                                        completed(err);
+                                    }
+                                    else {
+                                        completed(null, uncryptedData);
+                                    }
+                                };
+
                                 // first send data length
                                 me.socket.write(dataLength, (err) => {
                                     if (err) {
-                                        completed(err);
-                                        return;
+                                        writeCompleted(err);
                                     }
+                                    else {
+                                        // now the crypted data
 
-                                    // now the crypted data
-                                    me.socket.write(cryptedData, (err) => {
-                                        if (err) {
-                                            completed(err);
-                                        }
-                                        else {
-                                            completed(null, uncryptedData);  // all send
-                                        }
-                                    });
+                                        me.socket.write(cryptedData, (err) => {
+                                            if (err) {
+                                                writeCompleted(err, [ dataLength ]);
+                                            }
+                                            else {
+                                                // all send
+                                                writeCompleted(err, [ dataLength, cryptedData ]);
+                                            }
+                                        });
+                                    }
                                 });
                             }
                             catch (e) {
