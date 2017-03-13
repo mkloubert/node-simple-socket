@@ -1183,7 +1183,7 @@ export class SimpleSocket extends Events.EventEmitter {
                                     // emit 'write.after'
                                     me.emit
                                       .apply(me,
-                                             [ 'write.after', uncryptedData, isCompressed ].concat(additionalArgs));
+                                             [ 'write.after', err, uncryptedData, isCompressed ].concat(additionalArgs));
 
                                     if (err) {
                                         completed(err);

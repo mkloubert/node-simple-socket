@@ -303,7 +303,7 @@ socket.on('stream.read', function(fdTarget, chunk, bytesWritten, hashOfChunk) {
 socket.on('stream.write', function(fdSrc, remainingBytes, chunk, hashOfChunk) {
     // send stream / file chunk to remote
 });
-socket.on('write.after', function(uncryptedData, isCompressed, dataLength, cryptedData) {
+socket.on('write.after', function(err, uncryptedData, isCompressed, dataLength, cryptedData) {
     // socket has (tried to) send data
 });
 socket.on('write.before', function(uncryptedData, isCompressed, dataLength, cryptedData) {

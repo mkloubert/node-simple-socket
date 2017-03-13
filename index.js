@@ -923,7 +923,7 @@ class SimpleSocket extends Events.EventEmitter {
                                 let writeCompleted = (err, additionalArgs = []) => {
                                     // emit 'write.after'
                                     me.emit
-                                        .apply(me, ['write.after', uncryptedData, isCompressed].concat(additionalArgs));
+                                        .apply(me, ['write.after', err, uncryptedData, isCompressed].concat(additionalArgs));
                                     if (err) {
                                         completed(err);
                                     }
