@@ -44,19 +44,19 @@ exports.DefaultCWD = process.cwd();
 /**
  * The default text encoding.
  */
-exports.DefaultEncoding = exports.DEFAULT_ENCODING;
+exports.DefaultEncoding = 'utf8';
 /**
  * The default size for a maximum data package.
  */
-exports.DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+exports.DefaultMaxPackageSize = 16777211;
 /**
  * Default buffer size for reading streams.
  */
-exports.DefaultReadBufferSize = DEFAULT_DEFAULT_READ_BUFFER_SIZE;
+exports.DefaultReadBufferSize = 8192;
 /**
  * The default RSA key size.
  */
-exports.DefaultRSAKeySize = DEFAULT_RSA_KEY_SIZE;
+exports.DefaultRSAKeySize = 512;
 /**
  * List of data transform directions.
  */

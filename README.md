@@ -364,7 +364,7 @@ The module provides the following (public) variables that store default settings
 
 ```javascript
 // initial value for 'compress' property
-// Default: (undefined)
+// Default: (undefined) / auto
 simpleSocketModule.Compress = true;
 
 // initial value for 'cwd' property

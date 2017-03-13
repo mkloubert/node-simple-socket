@@ -45,39 +45,39 @@ export const DEFAULT_ENCODING = 'utf8';
 /**
  * Default value that indicates if compression should be used or not.
  */
-export var Compress: boolean;
+export let Compress: boolean;
 /**
  * Default working directory.
  */
-export var DefaultCWD = process.cwd();
+export let DefaultCWD = process.cwd();
 /**
  * The default text encoding.
  */
-export var DefaultEncoding = DEFAULT_ENCODING;
+export let DefaultEncoding = 'utf8';
 /**
  * Default data transformer.
  */
-export var DefaultDataTransformer: DataTransformer;
+export let DefaultDataTransformer: DataTransformer;
 /**
  * Default handshake transformer.
  */
-export var DefaultHandshakeTransformer: DataTransformer;
+export let DefaultHandshakeTransformer: DataTransformer;
 /**
  * The default size for a maximum data package.
  */
-export var DefaultMaxPackageSize = DEFAULT_MAX_PACKAGE_SIZE;
+export let DefaultMaxPackageSize = 16777211;
 /**
  * The default password generator.
  */
-export var DefaultPasswordGenerator: PasswordGenerator;
+export let DefaultPasswordGenerator: PasswordGenerator;
 /**
  * Default buffer size for reading streams.
  */
-export var DefaultReadBufferSize = DEFAULT_DEFAULT_READ_BUFFER_SIZE;
+export let DefaultReadBufferSize = 8192;
 /**
  * The default RSA key size.
  */
-export var DefaultRSAKeySize = DEFAULT_RSA_KEY_SIZE;
+export let DefaultRSAKeySize = 512;
 
 
 /**
