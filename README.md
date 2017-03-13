@@ -291,6 +291,14 @@ socket.on('error', function(err) {
 socket.on('handshake', function(pwd) {
     // socket has made a handshake
 });
+socket.on('password.generating', function() {
+    // socket is generating a password for the
+    // symmetric encryption
+});
+socket.on('password.generated', function(pwd) {
+    // password for the symmetric encryption
+    // has been generated
+});
 socket.on('rsakey.generating', function(keySize) {
     // socket is generting a RSA key pair
 });

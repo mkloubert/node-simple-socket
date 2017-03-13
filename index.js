@@ -461,9 +461,11 @@ class SimpleSocket extends Events.EventEmitter {
                                         try {
                                             let publicKey = untransformedBuffer.toString(me.getEncoding());
                                             let key = RSA(publicKey);
+                                            me.emit('password.generating');
                                             // generate and send password
                                             me.generatePassword().then((pwd) => {
                                                 try {
+                                                    me.emit('password.generated', pwd);
                                                     let pwdLength = Buffer.alloc(2);
                                                     pwdLength.writeUInt16LE(pwd.length, 0);
                                                     // first send size of password
