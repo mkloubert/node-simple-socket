@@ -381,8 +381,12 @@ simpleSocketModule.DefaultCWD = 'E:/test';
 
 // initial value for 'dataTransformer' property
 // Default: (undefined)
-simpleSocketModule.DefaultDataTransformer = function(untransformedData) {
-    // return transformed data
+simpleSocketModule.DefaultDataTransformer = function(ctx) {
+    // ctx.data      => the data to transform
+    // ctx.direction => the direction, s. https://mkloubert.github.io/node-simple-socket/enums/_index_.datatransformerdirection.html
+
+    // return transformed data as buffer
+    // directly or as Promise
 };
 
 // initial value for 'encoding' property
@@ -391,8 +395,12 @@ simpleSocketModule.DefaultEncoding = 'ascii';
 
 // initial value for 'handshakeTransformer' property
 // Default: (undefined)
-simpleSocketModule.DefaultHandshakeTransformer = function(untransformedData) {
-    // return transformed data
+simpleSocketModule.DefaultHandshakeTransformer = function(ctx) {
+    // ctx.data      => the data to transform
+    // ctx.direction => the direction, s. https://mkloubert.github.io/node-simple-socket/enums/_index_.datatransformerdirection.html
+
+    // return transformed data as buffer
+    // directly or as Promise
 };
 
 // initial value for 'maxPackageSize' property
@@ -402,7 +410,8 @@ simpleSocketModule.DefaultMaxPackageSize = 239795979;
 // initial value for 'passwordGenerator' property
 // Default: (undefined)
 simpleSocketModule.DefaultPasswordGenerator = function() {
-    // return generated password
+    // return transformed password as buffer
+    // directly or as Promise
 };
 
 // initial value for 'readBufferSize' property
