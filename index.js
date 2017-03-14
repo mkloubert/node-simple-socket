@@ -556,7 +556,7 @@ class SimpleSocket extends Events.EventEmitter {
                                                 let untransformData = (transformedData) => {
                                                     let transformerPromise = asDataTransformerPromise(me.dataTransformer, DataTransformerDirection.Restore, transformedData);
                                                     transformerPromise.then((untransformedData) => {
-                                                        completed(null, transformedData);
+                                                        completed(null, untransformedData);
                                                     }, (err) => {
                                                         completed(err);
                                                     });

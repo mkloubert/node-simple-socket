@@ -747,7 +747,7 @@ export class SimpleSocket extends Events.EventEmitter {
                                                                                                       transformedData);
 
                                                     transformerPromise.then((untransformedData) => {
-                                                        completed(null, transformedData);
+                                                        completed(null, untransformedData);
                                                     }, (err) => {
                                                         completed(err);
                                                     });
