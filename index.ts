@@ -951,9 +951,8 @@ export class SimpleSocket extends Events.EventEmitter {
                                     let chunk = Buffer.alloc(chunkLength);
                                     chunkBlock.copy(chunk, 0, 4 + hash.length);
 
-                                    let realHash = new Buffer(Crypto.createHash('sha256')
-                                                                    .update(chunk).digest('base64'),
-                                                              'base64');
+                                    let realHash = Crypto.createHash('sha256')
+                                                         .update(chunk).digest();
 
                                     if (hash.equals(realHash)) {
                                         FS.write(fdTarget, chunk, (err, written) => {
@@ -1370,9 +1369,8 @@ export class SimpleSocket extends Events.EventEmitter {
 
                         let hash: Buffer;
                         if (chunk.length > 0) {
-                            hash = new Buffer(Crypto.createHash('sha256')
-                                                    .update(chunk).digest('base64'),
-                                              'base64');
+                            hash = Crypto.createHash('sha256')
+                                         .update(chunk).digest();
                         }
                         else {
                             hash = Buffer.alloc(0);  // we have no data to hash
