@@ -178,11 +178,19 @@ class SimpleSocket extends Events.EventEmitter {
             buff = ssocket_helpers.asBuffer(data, me.getEncoding());
         }
         return new Promise((resolve, reject) => {
-            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+            let completed = (err) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    me.emit('close');
+                    resolve();
+                }
+            };
             try {
                 if (!buff || buff.length < 1) {
                     me.socket.end();
-                    completed();
+                    completed(null);
                     return;
                 }
                 return this.socket.end(buff, (err) => {
@@ -190,8 +198,7 @@ class SimpleSocket extends Events.EventEmitter {
                         completed(err);
                     }
                     else {
-                        me.emit('close');
-                        completed();
+                        completed(null);
                     }
                 });
             }
@@ -734,8 +741,8 @@ class SimpleSocket extends Events.EventEmitter {
                                     chunkBlock.copy(hash, 0, 4, 4 + hash.length);
                                     let chunk = Buffer.alloc(chunkLength);
                                     chunkBlock.copy(chunk, 0, 4 + hash.length);
-                                    let realHash = new Buffer(Crypto.createHash('sha256')
-                                        .update(chunk).digest('base64'), 'base64');
+                                    let realHash = Crypto.createHash('sha256')
+                                        .update(chunk).digest();
                                     if (hash.equals(realHash)) {
                                         FS.write(fdTarget, chunk, (err, written) => {
                                             if (!err) {
@@ -1082,8 +1089,8 @@ class SimpleSocket extends Events.EventEmitter {
                         chunkLength.writeUInt32LE(chunk.length, 0);
                         let hash;
                         if (chunk.length > 0) {
-                            hash = new Buffer(Crypto.createHash('sha256')
-                                .update(chunk).digest('base64'), 'base64');
+                            hash = Crypto.createHash('sha256')
+                                .update(chunk).digest();
                         }
                         else {
                             hash = Buffer.alloc(0); // we have no data to hash

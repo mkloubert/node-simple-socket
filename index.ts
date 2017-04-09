@@ -277,12 +277,21 @@ export class SimpleSocket extends Events.EventEmitter {
         }
         
         return new Promise<any>((resolve, reject) => {
-            let completed = ssocket_helpers.createSimplePromiseCompletedAction(resolve, reject);
+            let completed = (err: any) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    me.emit('close');
+
+                    resolve();
+                }
+            };
 
             try {
                 if (!buff || buff.length < 1) {
                     me.socket.end();
-                    completed();
+                    completed(null);
 
                     return;
                 }
@@ -292,9 +301,7 @@ export class SimpleSocket extends Events.EventEmitter {
                         completed(err);
                     }
                     else {
-                        me.emit('close');
-
-                        completed();
+                        completed(null);
                     }
                 });
             }
